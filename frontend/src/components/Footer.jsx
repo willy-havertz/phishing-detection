@@ -1,0 +1,14 @@
+function Footer() {
+  return (
+    <footer className="footer">
+      <p>
+        🛡️ <strong>PhishGuard</strong> - AI-Powered Phishing Detection Platform
+      </p>
+      <p style={{ marginTop: "0.5rem" }}>
+        Built for cybersecurity awareness in Kenya 🇰🇪 | Hackathon 2026
+      </p>
+    </footer>
+  );
+}
+
+export default Footer;
