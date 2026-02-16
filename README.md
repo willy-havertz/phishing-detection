@@ -176,66 +176,6 @@ RATE_LIMIT=30
 
 See `.env.example` files in each directory for all configuration options.
 
----
-
-## 📡 API Endpoints
-
-### ML Service (Port 8001)
-
-| Method | Endpoint    | Description                   |
-| ------ | ----------- | ----------------------------- |
-| POST   | `/analyze`  | Analyze content for phishing  |
-| GET    | `/patterns` | Get detection pattern list    |
-| GET    | `/stats`    | Detection system statistics   |
-| GET    | `/health`   | Service health check          |
-| GET    | `/docs`     | Interactive API documentation |
-
-### POST `/analyze` — Request
-
-```json
-{
-  "content": "Your M-PESA account will be suspended! Verify PIN at http://mpesa-verify.tk",
-  "content_type": "sms"
-}
-```
-
-### POST `/analyze` — Response
-
-```json
-{
-  "classification": "phishing",
-  "confidence_score": 0.89,
-  "risk_level": "critical",
-  "threat_indicators": [
-    {
-      "category": "Credential Harvesting",
-      "description": "Requests sensitive data: 'pin'",
-      "severity": "critical",
-      "confidence": 0.95
-    },
-    {
-      "category": "Suspicious TLD",
-      "description": "Domain uses suspicious TLD: .tk",
-      "severity": "high",
-      "confidence": 0.85
-    }
-  ],
-  "explanation": "⚠️ PHISHING DETECTED: This sms shows 5 threat indicators...",
-  "recommendations": [
-    "🚫 DO NOT click any links in this message",
-    "📞 Contact Safaricom (100) or your bank directly to verify"
-  ]
-}
-```
-
----
-
-## 🎨 Color Theme
-
-| Color         | Hex       | Usage               |
-| ------------- | --------- | ------------------- |
-| Primary Green | `#ACC8A2` | Buttons, highlights |
-| Dark Green    | `#1A2517` | Headers, text, nav  |
 
 ---
 
@@ -285,7 +225,7 @@ See `.env.example` files in each directory for all configuration options.
 
 ---
 
-## 🇰🇪 Kenya-Specific Detections
+## Kenya-Specific Detections
 
 | Category         | Targets                                                   |
 | ---------------- | --------------------------------------------------------- |
