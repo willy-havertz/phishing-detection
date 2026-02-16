@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict, Tuple, Any
 import re
 import math
+import csv
 import time
 import html
 from urllib.parse import urlparse, unquote
@@ -729,7 +730,68 @@ class PhishingMLModel:
         logger.info("ML models trained successfully")
     
     def _train_url_model(self):
-        """Train URL classification model"""
+        """Train URL classification model using real phishing URL dataset"""
+        dataset_path = os.path.join(os.path.dirname(__file__), "datasets", "phishing_urls.csv")
+        
+        legit_features = []
+        phish_features = []
+        
+        try:
+            with open(dataset_path, "r") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    url = row["url"].strip()
+                    label = row["label"].strip().lower()
+                    
+                    try:
+                        features = LexicalFeatureExtractor.extract_url_features(url)
+                        if label == "legitimate":
+                            legit_features.append(features)
+                        elif label == "phishing":
+                            phish_features.append(features)
+                    except Exception:
+                        continue
+            
+            logger.info(f"URL dataset loaded: {len(legit_features)} legitimate, {len(phish_features)} phishing URLs")
+        except FileNotFoundError:
+            logger.warning(f"URL dataset not found at {dataset_path}, falling back to synthetic data")
+            self._train_url_model_synthetic()
+            return
+        
+        if len(legit_features) < 10 or len(phish_features) < 10:
+            logger.warning("Insufficient URL dataset samples, falling back to synthetic data")
+            self._train_url_model_synthetic()
+            return
+        
+        self.url_feature_names = sorted(legit_features[0].keys())
+        
+        X_legit = np.array([[f.get(k, 0.0) for k in self.url_feature_names] for f in legit_features])
+        X_phish = np.array([[f.get(k, 0.0) for k in self.url_feature_names] for f in phish_features])
+        
+        X = np.vstack([X_legit, X_phish])
+        y = np.array([0] * len(legit_features) + [1] * len(phish_features))
+        
+        # Shuffle
+        np.random.seed(42)
+        indices = np.random.permutation(len(X))
+        X, y = X[indices], y[indices]
+        
+        # Scale
+        X_scaled = self.url_scaler.fit_transform(X)
+        
+        # Train Random Forest
+        self.url_model = RandomForestClassifier(
+            n_estimators=100,
+            max_depth=10,
+            min_samples_split=5,
+            random_state=42,
+            n_jobs=-1
+        )
+        self.url_model.fit(X_scaled, y)
+        logger.info(f"URL model trained on {len(X)} real samples")
+    
+    def _train_url_model_synthetic(self):
+        """Fallback: Train URL model with synthetic data if dataset unavailable"""
         np.random.seed(42)
         n_legit = 500
         n_phish = 500
@@ -844,7 +906,75 @@ class PhishingMLModel:
         self.url_model.fit(X_scaled, y)
     
     def _train_text_model(self):
-        """Train text classification model for SMS/email with well-separated distributions"""
+        """Train text classification model using real SMS Spam Collection dataset"""
+        dataset_path = os.path.join(os.path.dirname(__file__), "datasets", "sms_spam.csv")
+        
+        legit_features = []
+        phish_features = []
+        
+        try:
+            with open(dataset_path, "r", encoding="utf-8") as f:
+                reader = csv.reader(f, delimiter="\t")
+                for row in reader:
+                    if len(row) < 2:
+                        continue
+                    label = row[0].strip().lower()
+                    text = row[1].strip()
+                    
+                    if len(text) < 5:
+                        continue
+                    
+                    try:
+                        # Determine content type — SMS for short, email-like for longer
+                        content_type = "sms" if len(text) < 300 else "email"
+                        features = TextFeatureExtractor.extract_text_features(text, content_type)
+                        
+                        if label == "ham":
+                            legit_features.append(features)
+                        elif label == "spam":
+                            phish_features.append(features)
+                    except Exception:
+                        continue
+            
+            logger.info(f"Text dataset loaded: {len(legit_features)} legitimate, {len(phish_features)} spam/phishing messages")
+        except FileNotFoundError:
+            logger.warning(f"Text dataset not found at {dataset_path}, falling back to synthetic data")
+            self._train_text_model_synthetic()
+            return
+        
+        if len(legit_features) < 10 or len(phish_features) < 10:
+            logger.warning("Insufficient text dataset samples, falling back to synthetic data")
+            self._train_text_model_synthetic()
+            return
+        
+        self.text_feature_names = sorted(legit_features[0].keys())
+        
+        X_legit = np.array([[f.get(k, 0.0) for k in self.text_feature_names] for f in legit_features])
+        X_phish = np.array([[f.get(k, 0.0) for k in self.text_feature_names] for f in phish_features])
+        
+        X = np.vstack([X_legit, X_phish])
+        y = np.array([0] * len(legit_features) + [1] * len(phish_features))
+        
+        # Shuffle
+        np.random.seed(42)
+        indices = np.random.permutation(len(X))
+        X, y = X[indices], y[indices]
+        
+        # Scale
+        X_scaled = self.text_scaler.fit_transform(X)
+        
+        # Train Gradient Boosting
+        self.text_model = GradientBoostingClassifier(
+            n_estimators=150,
+            max_depth=6,
+            learning_rate=0.1,
+            random_state=42
+        )
+        self.text_model.fit(X_scaled, y)
+        logger.info(f"Text model trained on {len(X)} real samples")
+    
+    def _train_text_model_synthetic(self):
+        """Fallback: Train text model with synthetic data if dataset unavailable"""
         np.random.seed(42)
         n_legit = 800
         n_phish = 800
@@ -1107,7 +1237,11 @@ def extract_urls(text: str) -> List[str]:
     for pattern in patterns:
         matches = re.findall(pattern, text, re.IGNORECASE)
         urls.extend(matches)
-    return list(set(urls))
+    unique = list(set(urls))
+    # Remove partial URLs that are substrings of longer extracted URLs
+    # This prevents e.g. 'www.google' being extracted alongside 'www.google.com/path'
+    filtered = [u for u in unique if not any(u != other and u in other for other in unique)]
+    return filtered if filtered else unique
 
 def analyze_url_advanced(url: str) -> List[ThreatIndicator]:
     """Advanced URL analysis"""
@@ -1243,17 +1377,26 @@ def analyze_url_advanced(url: str) -> List[ThreatIndicator]:
         
         # Check against legitimate domains (potential spoofing)
         all_legit = LEGITIMATE_DOMAINS["global"] + LEGITIMATE_DOMAINS["kenya"]
+        
+        # First check if this IS a legitimate domain (exact match or www. prefix)
+        is_actually_legit = False
         for legit in all_legit:
-            legit_name = legit.split('.')[0]
-            if legit_name in domain and legit not in domain:
-                indicators.append(ThreatIndicator(
-                    category="Domain Spoofing",
-                    description=f"Possible spoofed domain mimicking {legit}",
-                    severity="critical",
-                    matched_text=domain,
-                    confidence=0.9
-                ))
+            if domain == legit or domain == "www." + legit or domain.endswith("." + legit):
+                is_actually_legit = True
                 break
+        
+        if not is_actually_legit:
+            for legit in all_legit:
+                legit_name = legit.split('.')[0]
+                if len(legit_name) >= 4 and legit_name in domain and legit not in domain:
+                    indicators.append(ThreatIndicator(
+                        category="Domain Spoofing",
+                        description=f"Possible spoofed domain mimicking {legit}",
+                        severity="critical",
+                        matched_text=domain,
+                        confidence=0.9
+                    ))
+                    break
                 
     except Exception as e:
         pass
@@ -1725,7 +1868,7 @@ def calculate_risk_score(indicators: List[ThreatIndicator]) -> tuple:
     if score >= 0.40:
         classification = "phishing"
         risk_level = "critical" if score >= 0.70 else "high"
-    elif score >= 0.18:
+    elif score >= 0.20:
         classification = "suspicious"
         risk_level = "medium"
     else:
@@ -1941,19 +2084,31 @@ def analyze_content(content: str, content_type: str) -> AnalysisResponse:
     # Calculate combined score (heuristic + ML)
     heuristic_score, _, _ = calculate_risk_score(unique_indicators)
     
-    # Ensemble: heuristic-dominant with ML boost — use max(heuristic, ML) as base
-    # This ensures strong heuristic signals are never dampened by weak ML output
-    base_score = max(heuristic_score, ml_phishing_prob)
-    avg_score = (0.55 * heuristic_score) + (0.45 * ml_phishing_prob)
-    combined_score = max(base_score, avg_score)
-    combined_score = min(1.0, combined_score)
-    
-    # Safety override: if heuristic detected many indicators, trust it
+    # Ensemble: combine heuristic and ML intelligently
+    # Key insight: if heuristic finds no threats but ML says phishing,
+    # the content is likely safe (ML may overfit on stylistic features)
+    total_indicators = len(unique_indicators)
     critical_count = sum(1 for i in unique_indicators if i.severity == "critical")
     high_count = sum(1 for i in unique_indicators if i.severity == "high")
     medium_count = sum(1 for i in unique_indicators if i.severity == "medium")
     total_serious = critical_count + high_count
     
+    if total_indicators == 0:
+        # No heuristic indicators: ML alone, but dampened significantly
+        # This prevents false positives from ML on legitimate content
+        combined_score = ml_phishing_prob * 0.3
+    elif total_serious == 0 and medium_count <= 1:
+        # Only low/1 medium indicators: blend conservatively, trust heuristic more
+        combined_score = (0.7 * heuristic_score) + (0.3 * ml_phishing_prob)
+    else:
+        # Heuristic found real threats: use max to ensure nothing is missed
+        base_score = max(heuristic_score, ml_phishing_prob)
+        avg_score = (0.55 * heuristic_score) + (0.45 * ml_phishing_prob)
+        combined_score = max(base_score, avg_score)
+    
+    combined_score = min(1.0, combined_score)
+    
+    # Safety boost: if heuristic detected many indicators, ensure high score
     if total_serious >= 3 or critical_count >= 2:
         combined_score = max(combined_score, 0.85)
     elif total_serious >= 2 or critical_count >= 1:
@@ -1971,7 +2126,7 @@ def analyze_content(content: str, content_type: str) -> AnalysisResponse:
     if combined_score >= 0.40:
         classification = "phishing"
         risk_level = "critical" if combined_score >= 0.70 else "high"
-    elif combined_score >= 0.18:
+    elif combined_score >= 0.20:
         classification = "suspicious"
         risk_level = "medium"
     else:

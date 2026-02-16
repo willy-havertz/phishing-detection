@@ -1,323 +1,207 @@
 import { useState, useEffect } from "react";
 
-// API URL - uses environment variable in production, proxy in development
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 function Education() {
   const [patterns, setPatterns] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeQuiz, setActiveQuiz] = useState(null);
+  const [quizAnswer, setQuizAnswer] = useState(null);
 
-  useEffect(() => {
-    fetchPatterns();
-  }, []);
+  useEffect(() => { fetchPatterns(); }, []);
 
   const fetchPatterns = async () => {
     try {
       const response = await fetch(`${API_URL}/patterns`);
-      if (response.ok) {
-        const data = await response.json();
-        setPatterns(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch patterns:", err);
-    } finally {
-      setLoading(false);
-    }
+      if (response.ok) { const data = await response.json(); setPatterns(data); }
+    } catch (err) { console.error("Failed to fetch patterns:", err); }
+    finally { setLoading(false); }
   };
 
   const educationalContent = {
     urgency: {
-      title: "⚡ Urgency Tactics",
-      description:
-        "Phishers create a false sense of urgency to pressure victims into acting without thinking.",
-      examples: patterns?.urgency_tactics || [
-        "Immediate action required",
-        "Your account will be suspended",
-        "Act within 24 hours",
-        "Final warning",
-        "Security alert",
-      ],
+      title: "Urgency Tactics",
+      icon: "⚡",
+      description: "Scammers create fake urgency to pressure you into acting without thinking. They want you to panic.",
+      whatToDo: "Take a breath. Legitimate organizations give you time. If it feels rushed, it's probably a scam.",
+      examples: patterns?.urgency_tactics || ["Immediate action required", "Your account will be suspended", "Act within 24 hours", "Final warning", "Security alert"],
     },
     credential: {
-      title: "🔐 Credential Harvesting",
-      description:
-        "Legitimate organizations will NEVER ask for sensitive information via email or SMS.",
-      examples: patterns?.credential_harvesting || [
-        "Verify your account",
-        "Update your password",
-        "Confirm your identity",
-        "Enter your M-Pesa PIN",
-        "Banking details required",
-      ],
+      title: "Credential Harvesting",
+      icon: "🔐",
+      description: "Scammers try to trick you into giving away passwords, PINs, or personal details by pretending to be trusted services.",
+      whatToDo: "Never share passwords or PINs via email, SMS, or phone. Real companies never ask for this.",
+      examples: patterns?.credential_harvesting || ["Verify your account", "Update your password", "Confirm your identity", "Enter your M-Pesa PIN", "Banking details required"],
     },
     impersonation: {
-      title: "🎭 Common Impersonations",
-      description:
-        "Phishers often impersonate trusted organizations to gain your confidence.",
-      examples: patterns?.common_impersonations || [
-        "Banks (Equity, KCB, Co-op, Standard Chartered)",
-        "Mobile money (M-Pesa, Airtel Money)",
-        "Government agencies (KRA, NTSA)",
-        "E-commerce (Jumia, Amazon)",
-        "Social media (Facebook, WhatsApp)",
-      ],
+      title: "Brand Impersonation",
+      icon: "🎭",
+      description: "Scammers pretend to be from trusted organizations like banks, phone companies, or government agencies.",
+      whatToDo: "Always verify by contacting the organization directly through their official website or phone number.",
+      examples: patterns?.common_impersonations || ["Banks (Equity, KCB, Co-op)", "M-Pesa / Safaricom", "Government (KRA, NTSA)", "E-commerce (Jumia, Amazon)", "Social media (Facebook, WhatsApp)"],
     },
     redFlags: {
-      title: "🚩 Red Flags to Watch",
-      description: "Key indicators that a message might be a phishing attempt.",
-      examples: patterns?.red_flags || [
-        "Misspelled domain names (g00gle.com instead of google.com)",
-        "URL shorteners (bit.ly, tinyurl)",
-        "IP addresses instead of domain names",
-        "Suspicious TLDs (.tk, .ml, .xyz)",
-        "Generic greetings (Dear Customer)",
-        "Grammar and spelling errors",
-        "Requests for sensitive information via email/SMS",
-      ],
+      title: "Red Flags to Watch",
+      icon: "🚩",
+      description: "Key warning signs that a message or website might be a phishing attempt.",
+      whatToDo: "If you spot any of these signs, don't interact with the message. Use ThreatLens to scan it instead!",
+      examples: patterns?.red_flags || ["Misspelled domain names", "URL shorteners (bit.ly)", "IP addresses instead of domains", "Generic greetings (Dear Customer)", "Grammar errors", "Requests for sensitive info"],
     },
   };
 
   const kenyaSpecific = [
-    {
-      icon: "📱",
-      title: "M-Pesa Scams",
-      description:
-        "Safaricom will NEVER ask for your M-Pesa PIN. Do not share it with anyone, even if they claim to be from Safaricom.",
-      tips: [
-        "Never share your M-Pesa PIN",
-        "Safaricom doesn't call asking for PINs",
-        "Verify any M-Pesa issues via *234#",
-        "Report scam numbers to 0722 000 000",
-      ],
-    },
-    {
-      icon: "🏦",
-      title: "Banking Fraud",
-      description:
-        "Banks in Kenya will never ask you to provide your full banking details via SMS or email.",
-      tips: [
-        "Call your bank directly using the number on your card",
-        "Don't click links in messages claiming to be from your bank",
-        "Check URLs carefully - is it the real bank domain?",
-        "Enable transaction alerts on your accounts",
-      ],
-    },
-    {
-      icon: "📧",
-      title: "Email Phishing",
-      description:
-        "Phishing emails often impersonate universities, employers, or government agencies.",
-      tips: [
-        "Check the sender's email address carefully",
-        "Hover over links before clicking to see the real URL",
-        "Be suspicious of attachments from unknown senders",
-        "When in doubt, contact IT support",
-      ],
-    },
+    { icon: "📱", title: "M-Pesa Scams", description: "Safaricom will NEVER call or text asking for your M-Pesa PIN. No one from Safaricom needs your PIN — ever.", tips: ["Never share your M-Pesa PIN with anyone", "Verify M-Pesa issues by dialing *234#", "Report scam numbers to 0722 000 000", "Don't respond to \"reversal\" requests from strangers"] },
+    { icon: "🏦", title: "Banking Fraud", description: "Banks in Kenya will never ask for your full account details, passwords, or OTPs via SMS or email.", tips: ["Call your bank using the number on your card", "Never click links claiming to be from your bank", "Check URLs carefully — is it the real domain?", "Enable transaction alerts on all accounts"] },
+    { icon: "📧", title: "Email Phishing", description: "Phishing emails often impersonate universities, employers, KRA, or delivery services.", tips: ["Check the sender's email address carefully", "Hover over links to see where they really go", "Be suspicious of unexpected attachments", "When in doubt, contact IT support or the sender directly"] },
+  ];
+
+  const quizzes = [
+    { id: 1, question: "You receive an SMS: 'Your M-Pesa account has been blocked. Send PIN to 0712345678 to unblock.' What should you do?", options: ["Send your PIN immediately", "Call the number to ask", "Ignore it — Safaricom never asks for PINs via SMS", "Forward it to friends to warn them"], correct: 2 },
+    { id: 2, question: "An email from 'support@equitybnk.co.ke' asks you to verify your account. What's suspicious?", options: ["The email has a subject line", "The domain is misspelled (equitybnk vs equitybank)", "It mentions your account", "It has a greeting"], correct: 1 },
+    { id: 3, question: "A link reads 'http://192.168.1.100/kra-refund/claim.php'. Is this safe?", options: ["Yes, it mentions KRA", "Yes, it uses HTTP", "No — real websites don't use IP addresses", "Maybe, I should click to find out"], correct: 2 },
   ];
 
   const protectionSteps = [
-    {
-      step: 1,
-      action: "Stop",
-      description: "Don't click links or download attachments immediately",
-    },
-    {
-      step: 2,
-      action: "Think",
-      description:
-        "Does this request make sense? Would the organization really contact you this way?",
-    },
-    {
-      step: 3,
-      action: "Verify",
-      description:
-        "Contact the organization directly through official channels",
-    },
-    {
-      step: 4,
-      action: "Report",
-      description:
-        "Report suspicious messages to your IT team or the impersonated organization",
-    },
+    { step: 1, action: "Stop", icon: "🛑", description: "Don't click links or download attachments immediately. Take a moment." },
+    { step: 2, action: "Think", icon: "🤔", description: "Does this make sense? Would the organization really contact you this way?" },
+    { step: 3, action: "Verify", icon: "🔍", description: "Contact the organization directly through official channels to confirm." },
+    { step: 4, action: "Report", icon: "📢", description: "Report suspicious messages to your IT team, bank, or the impersonated organization." },
   ];
 
-  if (loading) {
-    return (
-      <div className="loading">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
+  if (loading) return <div className="loading"><div className="spinner"></div></div>;
 
   return (
-    <div>
-      <h1 style={{ marginBottom: "0.5rem" }}>📚 Learn About Phishing</h1>
-      <p style={{ color: "#6B736B", marginBottom: "2rem" }}>
-        Understanding phishing tactics is your first line of defense against
-        cyber threats.
-      </p>
-
-      {/* What is Phishing */}
-      <div className="chart-section" style={{ marginBottom: "2rem" }}>
-        <h2
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            marginBottom: "1rem",
-          }}
-        >
-          🎣 What is Phishing?
-        </h2>
-        <p style={{ fontSize: "1.1rem", lineHeight: "1.8" }}>
-          <strong>Phishing</strong> is a type of cyber attack where criminals
-          attempt to steal sensitive information (like passwords, credit card
-          numbers, or personal data) by disguising themselves as trustworthy
-          entities. They typically use email, SMS (known as "smishing"), or fake
-          websites to trick victims.
-        </p>
-        <div
-          style={{
-            marginTop: "1.5rem",
-            padding: "1rem",
-            background: "#FEF3C7",
-            borderRadius: "10px",
-            borderLeft: "4px solid #F59E0B",
-          }}
-        >
-          <strong>⚠️ In Kenya:</strong> Phishing attacks targeting M-Pesa, bank
-          accounts, and government services are increasingly common. Always
-          verify before sharing any personal or financial information.
+    <div className="education-page">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">📚 Learn to Spot Scams</h1>
+          <p className="page-subtitle">Understanding phishing tactics is your first line of defense. Knowledge is power!</p>
         </div>
       </div>
 
-      {/* Phishing Tactics */}
-      <h2 style={{ marginBottom: "1rem" }}>🎯 Common Phishing Tactics</h2>
-      <div className="education-grid" style={{ marginBottom: "2rem" }}>
-        {Object.values(educationalContent).map((category, index) => (
-          <div className="education-card" key={index}>
-            <h3>{category.title}</h3>
-            <p
-              style={{
-                color: "#6B736B",
-                marginBottom: "1rem",
-                fontSize: "0.9rem",
-              }}
-            >
-              {category.description}
-            </p>
-            <ul className="pattern-list">
-              {category.examples.map((example, i) => (
-                <li key={i}>
-                  <span style={{ color: "#EF4444" }}>•</span>
-                  {example}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-
-      {/* Kenya Specific */}
-      <h2 style={{ marginBottom: "1rem" }}>🇰🇪 Kenya-Specific Threats</h2>
-      <div className="education-grid" style={{ marginBottom: "2rem" }}>
-        {kenyaSpecific.map((item, index) => (
-          <div className="education-card" key={index}>
-            <h3>
-              {item.icon} {item.title}
-            </h3>
-            <p
-              style={{
-                color: "#6B736B",
-                marginBottom: "1rem",
-                fontSize: "0.9rem",
-              }}
-            >
-              {item.description}
-            </p>
-            <ul className="pattern-list">
-              {item.tips.map((tip, i) => (
-                <li key={i}>
-                  <span style={{ color: "#10B981" }}>✓</span>
-                  {tip}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+      {/* What is Phishing */}
+      <section className="edu-intro">
+        <div className="edu-intro-icon">🎣</div>
+        <div className="edu-intro-content">
+          <h2>What is Phishing?</h2>
+          <p><strong>Phishing</strong> is when criminals try to steal your personal information (passwords, bank details, M-Pesa PINs) by pretending to be someone you trust — like your bank, Safaricom, or a government agency.</p>
+          <p>They use emails, SMS messages, and fake websites to trick you. <strong>Anyone can be a target.</strong></p>
+        </div>
+        <div className="edu-intro-alert">
+          <strong>⚠️ In Kenya:</strong> Phishing attacks targeting M-Pesa, bank accounts, and KRA are increasingly common. Always verify before sharing any personal or financial information.
+        </div>
+      </section>
 
       {/* Protection Steps */}
-      <div className="chart-section" style={{ marginBottom: "2rem" }}>
-        <h2 style={{ marginBottom: "1.5rem" }}>🛡️ How to Protect Yourself</h2>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "1rem",
-          }}
-        >
+      <section className="edu-section">
+        <h2 className="edu-section-title">🛡️ The 4-Step Protection Rule</h2>
+        <p className="edu-section-desc">Follow these 4 simple steps whenever you receive a suspicious message:</p>
+        <div className="protection-grid">
           {protectionSteps.map((item) => (
-            <div
-              key={item.step}
-              style={{
-                padding: "1.5rem",
-                background: "linear-gradient(135deg, #ACC8A2 0%, #8FB584 100%)",
-                borderRadius: "12px",
-                textAlign: "center",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "2rem",
-                  fontWeight: "700",
-                  color: "#1A2517",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                {item.step}
-              </div>
-              <div
-                style={{
-                  fontWeight: "600",
-                  fontSize: "1.25rem",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                {item.action}
-              </div>
-              <p style={{ fontSize: "0.875rem", color: "#1A2517" }}>
-                {item.description}
-              </p>
+            <div key={item.step} className="protection-step">
+              <div className="protection-icon">{item.icon}</div>
+              <div className="protection-num">Step {item.step}</div>
+              <h3 className="protection-action">{item.action}</h3>
+              <p className="protection-desc">{item.description}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
+
+      {/* Phishing Tactics */}
+      <section className="edu-section">
+        <h2 className="edu-section-title">🎯 Common Scam Tactics</h2>
+        <p className="edu-section-desc">Scammers use these techniques to trick you. Learn to recognize them:</p>
+        <div className="tactics-grid">
+          {Object.values(educationalContent).map((category, index) => (
+            <div className="tactic-card" key={index}>
+              <div className="tactic-header">
+                <span className="tactic-icon">{category.icon}</span>
+                <h3>{category.title}</h3>
+              </div>
+              <p className="tactic-desc">{category.description}</p>
+              <div className="tactic-tip">
+                <strong>💡 What to do:</strong> {category.whatToDo}
+              </div>
+              <div className="tactic-examples">
+                <h4>Watch out for:</h4>
+                <ul>
+                  {category.examples.map((example, i) => (
+                    <li key={i}><span className="example-dot">•</span> {example}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Kenya Specific */}
+      <section className="edu-section">
+        <h2 className="edu-section-title">🇰🇪 Kenya-Specific Threats</h2>
+        <p className="edu-section-desc">These scams specifically target Kenyans. Be extra careful with:</p>
+        <div className="kenya-grid">
+          {kenyaSpecific.map((item, index) => (
+            <div className="kenya-card" key={index}>
+              <div className="kenya-header">
+                <span className="kenya-icon">{item.icon}</span>
+                <h3>{item.title}</h3>
+              </div>
+              <p className="kenya-desc">{item.description}</p>
+              <div className="kenya-tips">
+                {item.tips.map((tip, i) => (
+                  <div key={i} className="kenya-tip"><span className="tip-check">✓</span> {tip}</div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Quiz Section */}
+      <section className="edu-section">
+        <h2 className="edu-section-title">🧠 Test Your Knowledge</h2>
+        <p className="edu-section-desc">Can you spot the scam? Try these quick quizzes:</p>
+        <div className="quiz-grid">
+          {quizzes.map((quiz) => (
+            <div key={quiz.id} className="quiz-card">
+              <div className="quiz-num">Question {quiz.id}</div>
+              <p className="quiz-question">{quiz.question}</p>
+              <div className="quiz-options">
+                {quiz.options.map((option, i) => {
+                  const isSelected = activeQuiz === quiz.id && quizAnswer === i;
+                  const isCorrect = activeQuiz === quiz.id && quizAnswer !== null && i === quiz.correct;
+                  const isWrong = isSelected && i !== quiz.correct;
+                  return (
+                    <button
+                      key={i}
+                      className={`quiz-option ${isCorrect ? "correct" : ""} ${isWrong ? "wrong" : ""} ${isSelected ? "selected" : ""}`}
+                      onClick={() => { setActiveQuiz(quiz.id); setQuizAnswer(i); }}
+                      disabled={activeQuiz === quiz.id && quizAnswer !== null}
+                    >
+                      <span className="quiz-letter">{String.fromCharCode(65 + i)}</span>
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+              {activeQuiz === quiz.id && quizAnswer !== null && (
+                <div className={`quiz-result ${quizAnswer === quiz.correct ? "quiz-correct" : "quiz-wrong"}`}>
+                  {quizAnswer === quiz.correct ? "✅ Correct! Well done!" : `❌ Not quite. The correct answer is: ${quiz.options[quiz.correct]}`}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Quick Reference */}
-      <div
-        className="chart-section"
-        style={{
-          background: "linear-gradient(135deg, #1A2517 0%, #2A3A26 100%)",
-          color: "white",
-        }}
-      >
-        <h2 style={{ marginBottom: "1rem", color: "#ACC8A2" }}>
-          📋 Quick Reference Card
-        </h2>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "1.5rem",
-          }}
-        >
-          <div>
-            <h4 style={{ color: "#EF4444", marginBottom: "0.5rem" }}>
-              🚨 NEVER Do This
-            </h4>
-            <ul style={{ paddingLeft: "1.25rem", lineHeight: "1.8" }}>
+      <section className="quick-ref">
+        <h2 className="quick-ref-title">📋 Quick Reference Card</h2>
+        <div className="quick-ref-grid">
+          <div className="quick-ref-col">
+            <h4 className="ref-heading ref-danger">🚨 NEVER Do This</h4>
+            <ul className="ref-list">
               <li>Share passwords via email/SMS</li>
               <li>Click links from unknown senders</li>
               <li>Download unexpected attachments</li>
@@ -325,32 +209,28 @@ function Education() {
               <li>Rush into action under pressure</li>
             </ul>
           </div>
-          <div>
-            <h4 style={{ color: "#10B981", marginBottom: "0.5rem" }}>
-              ✅ ALWAYS Do This
-            </h4>
-            <ul style={{ paddingLeft: "1.25rem", lineHeight: "1.8" }}>
+          <div className="quick-ref-col">
+            <h4 className="ref-heading ref-safe">✅ ALWAYS Do This</h4>
+            <ul className="ref-list">
               <li>Verify sender identity</li>
               <li>Type URLs directly in browser</li>
-              <li>Contact organizations via official channels</li>
+              <li>Contact organizations officially</li>
               <li>Report suspicious messages</li>
               <li>Use strong, unique passwords</li>
             </ul>
           </div>
-          <div>
-            <h4 style={{ color: "#F59E0B", marginBottom: "0.5rem" }}>
-              📞 Report To
-            </h4>
-            <ul style={{ paddingLeft: "1.25rem", lineHeight: "1.8" }}>
+          <div className="quick-ref-col">
+            <h4 className="ref-heading ref-warn">📞 Report To</h4>
+            <ul className="ref-list">
               <li>Safaricom: 0722 000 000</li>
-              <li>Your bank's fraud hotline</li>
+              <li>Your bank&apos;s fraud hotline</li>
               <li>University IT department</li>
               <li>Kenya Police: 999 or 112</li>
               <li>CA Kenya: ca.go.ke</li>
             </ul>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

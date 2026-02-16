@@ -3,303 +3,146 @@ import { getScanHistory, clearHistory } from "../utils/scanStorage";
 
 function History() {
   const [scans, setScans] = useState([]);
-  const [filter, setFilter] = useState({
-    classification: "",
-    content_type: "",
-  });
+  const [filter, setFilter] = useState({ classification: "", content_type: "" });
+  const [expandedId, setExpandedId] = useState(null);
 
-  const loadScans = useCallback(() => {
-    setScans(getScanHistory());
-  }, []);
+  const loadScans = useCallback(() => { setScans(getScanHistory()); }, []);
 
-  useEffect(() => {
-    loadScans();
-
-    // Listen for real-time updates
-    const handleUpdate = () => loadScans();
-    window.addEventListener("scanUpdated", handleUpdate);
-
-    return () => window.removeEventListener("scanUpdated", handleUpdate);
-  }, [loadScans]);
+  useEffect(() => { loadScans(); const handleUpdate = () => loadScans(); window.addEventListener("scanUpdated", handleUpdate); return () => window.removeEventListener("scanUpdated", handleUpdate); }, [loadScans]);
 
   const handleClearHistory = () => {
-    if (window.confirm("Are you sure you want to clear all scan history?")) {
+    if (window.confirm("Are you sure you want to clear all scan history? This cannot be undone.")) {
       clearHistory();
       setScans([]);
     }
   };
 
   const filteredScans = scans.filter((s) => {
-    if (filter.classification && s.classification !== filter.classification)
-      return false;
-    if (filter.content_type && s.content_type !== filter.content_type)
-      return false;
+    if (filter.classification && s.classification !== filter.classification) return false;
+    if (filter.content_type && s.content_type !== filter.content_type) return false;
     return true;
   });
 
-  const getEmoji = (c) => {
-    if (c === "safe") return "✅";
-    if (c === "suspicious") return "⚠️";
-    return "🚨";
-  };
+  const getEmoji = (c) => c === "safe" ? "✅" : c === "suspicious" ? "⚠️" : "🚨";
+  const getTypeEmoji = (t) => t === "email" ? "📧" : t === "sms" ? "📱" : "🔗";
+  const getTypeLabel = (t) => t === "email" ? "Email" : t === "sms" ? "SMS" : "URL";
 
-  const getTypeEmoji = (t) => {
-    if (t === "email") return "📧";
-    if (t === "sms") return "📱";
-    return "🔗";
-  };
-
-  const getRiskStyle = (risk) => {
-    const styles = {
-      critical: { background: "#FEE2E2", color: "#DC2626" },
-      high: { background: "#FEF3C7", color: "#D97706" },
-      medium: { background: "#FEF9C3", color: "#CA8A04" },
-      low: { background: "#D1FAE5", color: "#059669" },
+  const getRiskConfig = (risk) => {
+    const configs = {
+      critical: { bg: "#FEE2E2", color: "#DC2626", label: "Critical" },
+      high: { bg: "#FFF7ED", color: "#EA580C", label: "High" },
+      medium: { bg: "#FFFBEB", color: "#D97706", label: "Medium" },
+      low: { bg: "#ECFDF5", color: "#059669", label: "Low" },
     };
-    return styles[risk] || styles.low;
+    return configs[risk] || configs.low;
   };
 
-  const getConfidenceColor = (score) => {
-    if (score < 0.3) return "#10B981";
-    if (score < 0.6) return "#F59E0B";
-    return "#EF4444";
-  };
+  const getConfidenceColor = (score) => score < 0.3 ? "#10B981" : score < 0.6 ? "#F59E0B" : "#EF4444";
 
   return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "0.5rem",
-        }}
-      >
-        <h1>📋 Scan History</h1>
+    <div className="history-page">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">📋 Scan History</h1>
+          <p className="page-subtitle">Review all your past scans and their results</p>
+        </div>
         {scans.length > 0 && (
-          <button
-            onClick={handleClearHistory}
-            style={{
-              padding: "0.5rem 1rem",
-              border: "2px solid #EF4444",
-              borderRadius: "8px",
-              background: "white",
-              color: "#EF4444",
-              cursor: "pointer",
-              fontWeight: 500,
-            }}
-          >
-            🗑️ Clear History
-          </button>
+          <button onClick={handleClearHistory} className="clear-btn">🗑️ Clear History</button>
         )}
       </div>
-      <p
-        style={{ color: "#6B736B", marginBottom: "1.5rem", fontSize: "0.9rem" }}
-      >
-        Real-time history of all your scanned content
-      </p>
 
       {scans.length === 0 ? (
-        <div
-          className="chart-section"
-          style={{ textAlign: "center", padding: "3rem" }}
-        >
-          <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📭</div>
-          <h3 style={{ marginBottom: "0.5rem" }}>No Scan History Yet</h3>
-          <p style={{ color: "#6B736B" }}>
-            Go to the{" "}
-            <a href="/" style={{ color: "#1A2517", fontWeight: 600 }}>
-              Scanner
-            </a>{" "}
-            page to analyze emails, SMS messages, or URLs.
-            <br />
-            All your scan results will be saved here automatically.
-          </p>
+        <div className="empty-state">
+          <div className="empty-icon">📭</div>
+          <h3>No Scan History Yet</h3>
+          <p>All your scan results will be automatically saved here. Go to the <a href="/">Scanner</a> page to start checking content.</p>
+          <a href="/" className="empty-cta">🔍 Go to Scanner</a>
         </div>
       ) : (
         <>
-          <div className="chart-section" style={{ marginBottom: "1.5rem" }}>
-            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.875rem",
-                    marginBottom: "0.25rem",
-                    color: "#6B736B",
-                  }}
-                >
-                  Classification
-                </label>
-                <select
-                  value={filter.classification}
-                  onChange={(e) =>
-                    setFilter({ ...filter, classification: e.target.value })
-                  }
-                  style={{
-                    padding: "0.5rem 1rem",
-                    border: "2px solid #E5E7E5",
-                    borderRadius: "8px",
-                    background: "white",
-                    minWidth: "150px",
-                  }}
-                >
-                  <option value="">All</option>
-                  <option value="phishing">🚨 Phishing</option>
-                  <option value="suspicious">⚠️ Suspicious</option>
-                  <option value="safe">✅ Safe</option>
-                </select>
+          {/* Filters */}
+          <div className="filter-bar">
+            <div className="filter-group">
+              <label className="filter-label">Filter by result:</label>
+              <div className="filter-chips">
+                <button className={`filter-chip ${filter.classification === "" ? "active" : ""}`} onClick={() => setFilter({...filter, classification: ""})}>All</button>
+                <button className={`filter-chip chip-danger ${filter.classification === "phishing" ? "active" : ""}`} onClick={() => setFilter({...filter, classification: "phishing"})}>🚨 Phishing</button>
+                <button className={`filter-chip chip-warn ${filter.classification === "suspicious" ? "active" : ""}`} onClick={() => setFilter({...filter, classification: "suspicious"})}>⚠️ Suspicious</button>
+                <button className={`filter-chip chip-safe ${filter.classification === "safe" ? "active" : ""}`} onClick={() => setFilter({...filter, classification: "safe"})}>✅ Safe</button>
               </div>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.875rem",
-                    marginBottom: "0.25rem",
-                    color: "#6B736B",
-                  }}
-                >
-                  Content Type
-                </label>
-                <select
-                  value={filter.content_type}
-                  onChange={(e) =>
-                    setFilter({ ...filter, content_type: e.target.value })
-                  }
-                  style={{
-                    padding: "0.5rem 1rem",
-                    border: "2px solid #E5E7E5",
-                    borderRadius: "8px",
-                    background: "white",
-                    minWidth: "150px",
-                  }}
-                >
-                  <option value="">All</option>
-                  <option value="email">📧 Email</option>
-                  <option value="sms">📱 SMS</option>
-                  <option value="url">🔗 URL</option>
-                </select>
-              </div>
-              <div style={{ display: "flex", alignItems: "flex-end" }}>
-                <button
-                  onClick={() =>
-                    setFilter({ classification: "", content_type: "" })
-                  }
-                  style={{
-                    padding: "0.5rem 1rem",
-                    border: "2px solid #E5E7E5",
-                    borderRadius: "8px",
-                    background: "white",
-                    cursor: "pointer",
-                  }}
-                >
-                  Clear Filters
-                </button>
+            </div>
+            <div className="filter-group">
+              <label className="filter-label">Content type:</label>
+              <div className="filter-chips">
+                <button className={`filter-chip ${filter.content_type === "" ? "active" : ""}`} onClick={() => setFilter({...filter, content_type: ""})}>All</button>
+                <button className={`filter-chip ${filter.content_type === "email" ? "active" : ""}`} onClick={() => setFilter({...filter, content_type: "email"})}>📧 Email</button>
+                <button className={`filter-chip ${filter.content_type === "sms" ? "active" : ""}`} onClick={() => setFilter({...filter, content_type: "sms"})}>📱 SMS</button>
+                <button className={`filter-chip ${filter.content_type === "url" ? "active" : ""}`} onClick={() => setFilter({...filter, content_type: "url"})}>🔗 URL</button>
               </div>
             </div>
           </div>
 
-          <div className="chart-section">
-            <div style={{ overflowX: "auto" }}>
-              <table className="history-table">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Classification</th>
-                    <th>Confidence</th>
-                    <th>Risk</th>
-                    <th>Explanation</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredScans.map((s) => (
-                    <tr key={s.id}>
-                      <td>
-                        {getTypeEmoji(s.content_type)} {s.content_type}
-                      </td>
-                      <td>
-                        <span
-                          className={"classification-badge " + s.classification}
-                        >
-                          {getEmoji(s.classification)} {s.classification}
-                        </span>
-                      </td>
-                      <td>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "60px",
-                              height: "8px",
-                              background: "#E5E7E5",
-                              borderRadius: "4px",
-                              overflow: "hidden",
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: s.confidence_score * 100 + "%",
-                                height: "100%",
-                                borderRadius: "4px",
-                                background: getConfidenceColor(
-                                  s.confidence_score,
-                                ),
-                              }}
-                            />
-                          </div>
-                          <span style={{ fontSize: "0.875rem" }}>
-                            {Math.round(s.confidence_score * 100)}%
-                          </span>
+          <div className="history-count">
+            Showing {filteredScans.length} of {scans.length} scan{scans.length !== 1 ? "s" : ""}
+          </div>
+
+          {/* Scan Cards */}
+          <div className="history-list">
+            {filteredScans.map((s) => {
+              const riskConfig = getRiskConfig(s.risk_level);
+              const isExpanded = expandedId === s.id;
+              return (
+                <div key={s.id} className={`history-card card-${s.classification}`} onClick={() => setExpandedId(isExpanded ? null : s.id)}>
+                  <div className="history-card-top">
+                    <div className="history-card-left">
+                      <span className={`classification-badge ${s.classification}`}>
+                        {getEmoji(s.classification)} {s.classification.charAt(0).toUpperCase() + s.classification.slice(1)}
+                      </span>
+                      <span className="history-type">{getTypeEmoji(s.content_type)} {getTypeLabel(s.content_type)}</span>
+                    </div>
+                    <div className="history-card-right">
+                      <div className="history-confidence">
+                        <span className="confidence-text">{Math.round(s.confidence_score * 100)}%</span>
+                        <div className="confidence-mini-bar">
+                          <div className="confidence-mini-fill" style={{ width: `${s.confidence_score * 100}%`, background: getConfidenceColor(s.confidence_score) }}></div>
                         </div>
-                      </td>
-                      <td>
-                        <span
-                          style={{
-                            padding: "0.25rem 0.5rem",
-                            borderRadius: "4px",
-                            fontSize: "0.75rem",
-                            fontWeight: 500,
-                            ...getRiskStyle(s.risk_level),
-                          }}
-                        >
-                          {s.risk_level.toUpperCase()}
-                        </span>
-                      </td>
-                      <td
-                        style={{
-                          maxWidth: "250px",
-                          fontSize: "0.875rem",
-                          color: "#6B736B",
-                        }}
-                      >
-                        {s.explanation}
-                      </td>
-                      <td
-                        style={{ whiteSpace: "nowrap", fontSize: "0.875rem" }}
-                      >
-                        {new Date(s.created_at).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div
-              style={{
-                marginTop: "1rem",
-                color: "#6B736B",
-                fontSize: "0.875rem",
-                textAlign: "center",
-              }}
-            >
-              Showing {filteredScans.length} of {scans.length} records
-            </div>
+                      </div>
+                      <span className="history-risk" style={{ color: riskConfig.color, background: riskConfig.bg }}>{riskConfig.label}</span>
+                      <span className="history-date">{new Date(s.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  {isExpanded && (
+                    <div className="history-card-detail">
+                      <div className="detail-section">
+                        <h4>Analysis Summary</h4>
+                        <p>{s.explanation}</p>
+                      </div>
+                      {s.threat_indicators && s.threat_indicators.length > 0 && (
+                        <div className="detail-section">
+                          <h4>Threat Indicators ({s.threat_indicators.length})</h4>
+                          <div className="detail-indicators">
+                            {s.threat_indicators.map((ind, i) => (
+                              <div key={i} className="detail-indicator">
+                                <span className="detail-ind-severity" style={{ color: getRiskConfig(ind.severity).color }}>{ind.severity.toUpperCase()}</span>
+                                <span className="detail-ind-cat">{ind.category}</span>
+                                <span className="detail-ind-desc">{ind.description}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {s.content_preview && (
+                        <div className="detail-section">
+                          <h4>Content Preview</h4>
+                          <p className="detail-preview">{s.content_preview}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="expand-hint">{isExpanded ? "Click to collapse ▲" : "Click to see details ▼"}</div>
+                </div>
+              );
+            })}
           </div>
         </>
       )}

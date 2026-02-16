@@ -2,11 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { saveScan } from "../utils/scanStorage";
 import { sanitizeInput, createRateLimiter } from "../utils/security";
 
-// API URL - uses environment variable in production, proxy in development
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 const MAX_CONTENT_LENGTH = 50000;
-
-// Rate limit: 10 scans per minute
 const checkRateLimit = createRateLimiter(10, 60000);
 
 function Scanner() {
@@ -15,14 +12,13 @@ function Scanner() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [showTechnical, setShowTechnical] = useState(false);
   const abortControllerRef = useRef(null);
+  const resultRef = useRef(null);
 
-  // Change detection state
   const [lastScannedContent, setLastScannedContent] = useState("");
   const [contentChanged, setContentChanged] = useState(false);
-  const [changeHighlight, setChangeHighlight] = useState(false);
 
-  // Detect content changes after scan
   useEffect(() => {
     if (lastScannedContent && content !== lastScannedContent && result) {
       setContentChanged(true);
@@ -33,77 +29,34 @@ function Scanner() {
 
   const handleContentChange = (e) => {
     const value = e.target.value;
-    // Limit input length
-    if (value.length <= MAX_CONTENT_LENGTH) {
-      setContent(value);
-    }
-  };
-
-  const handleChangedClick = () => {
-    setChangeHighlight(true);
-    setTimeout(() => setChangeHighlight(false), 1500);
+    if (value.length <= MAX_CONTENT_LENGTH) setContent(value);
   };
 
   const handleScan = async () => {
     const trimmedContent = content.trim();
-
-    if (!trimmedContent) {
-      setError("Please enter content to scan");
-      return;
-    }
-
-    // Check rate limit
-    if (!checkRateLimit()) {
-      setError(
-        "Too many requests. Please wait a moment before scanning again.",
-      );
-      return;
-    }
-
-    // Cancel any pending request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+    if (!trimmedContent) { setError("Please enter content to scan"); return; }
+    if (!checkRateLimit()) { setError("Too many requests. Please wait a moment."); return; }
+    if (abortControllerRef.current) abortControllerRef.current.abort();
     abortControllerRef.current = new AbortController();
 
-    setLoading(true);
-    setError(null);
-    setResult(null);
-
+    setLoading(true); setError(null); setResult(null);
     try {
-      // Sanitize content before sending
       const sanitizedContent = sanitizeInput(trimmedContent);
-
       const response = await fetch(`${API_URL}/analyze`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          content: sanitizedContent,
-          content_type: contentType,
-        }),
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ content: sanitizedContent, content_type: contentType }),
         signal: abortControllerRef.current.signal,
       });
-
-      if (response.status === 429) {
-        throw new Error(
-          "Rate limit exceeded. Please wait before trying again.",
-        );
-      }
-
+      if (response.status === 429) throw new Error("Rate limit exceeded. Please wait.");
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || "Scan failed. Please try again.");
       }
-
       const data = await response.json();
       setResult(data);
       setLastScannedContent(sanitizedContent);
       setContentChanged(false);
-
-      // Save scan to localStorage for real-time Dashboard/History
       saveScan({
         content_type: contentType,
         content_preview: sanitizedContent.substring(0, 100),
@@ -113,423 +66,247 @@ function Scanner() {
         explanation: data.explanation,
         threat_indicators: data.threat_indicators,
       });
+      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch (err) {
-      if (err.name === "AbortError") {
-        return; // Request was cancelled
-      }
-      setError(
-        err.message || "Analysis failed. Make sure the backend is running.",
-      );
-    } finally {
-      setLoading(false);
+      if (err.name === "AbortError") return;
+      setError(err.message || "Analysis failed. Make sure the backend is running.");
+    } finally { setLoading(false); }
+  };
+
+  const getResultConfig = (classification) => {
+    switch (classification) {
+      case "safe": return { emoji: "✅", title: "Looks Safe", color: "#059669", bg: "#ECFDF5", border: "#A7F3D0", message: "No significant threats detected. This content appears legitimate.", action: "You can proceed with confidence, but always stay vigilant." };
+      case "suspicious": return { emoji: "⚠️", title: "Potentially Suspicious", color: "#D97706", bg: "#FFFBEB", border: "#FDE68A", message: "Some warning signs were detected. This content may not be safe.", action: "Proceed with caution. Verify the sender before taking any action." };
+      case "phishing": return { emoji: "🚨", title: "Phishing Detected!", color: "#DC2626", bg: "#FEF2F2", border: "#FECACA", message: "This content shows strong signs of being a phishing attempt!", action: "Do NOT click any links, share personal info, or respond to this message." };
+      default: return { emoji: "❓", title: "Unknown", color: "#6B7280", bg: "#F9FAFB", border: "#E5E7EB", message: "", action: "" };
     }
   };
 
-  const getClassificationEmoji = (classification) => {
-    switch (classification) {
-      case "safe":
-        return "✅";
-      case "suspicious":
-        return "⚠️";
-      case "phishing":
-        return "🚨";
-      default:
-        return "❓";
+  const getSeverityLabel = (severity) => {
+    switch (severity) {
+      case "critical": return { label: "CRITICAL", color: "#DC2626", bg: "#FEE2E2" };
+      case "high": return { label: "HIGH RISK", color: "#EA580C", bg: "#FFF7ED" };
+      case "medium": return { label: "MEDIUM", color: "#D97706", bg: "#FFFBEB" };
+      case "low": return { label: "LOW", color: "#6B7280", bg: "#F3F4F6" };
+      default: return { label: severity, color: "#6B7280", bg: "#F3F4F6" };
     }
   };
 
   const placeholders = {
-    email:
-      "Paste the email content here...\n\nExample:\nDear Customer,\nYour account has been suspended. Click here immediately to verify your identity: http://secure-bank-login.xyz/verify\nBest regards,\nSecurity Team",
-    sms: "Paste the SMS content here...\n\nExample:\nURGENT! Your M-Pesa account will be blocked. Send your PIN to 0712345678 to avoid suspension.",
-    url: "Paste a URL to analyze...\n\nExample:\nhttp://secure-bank-ke.xyz/login",
+    email: "Paste the email content you want to check here...\n\nFor example, paste that suspicious email from your \"bank\" asking you to verify your account.",
+    sms: "Paste the SMS message here...\n\nFor example, that text saying your M-Pesa has been suspended.",
+    url: "Paste the URL (web link) you want to check...\n\nExample: http://suspicious-site.xyz/login",
   };
 
+  const confidencePercent = result ? Math.round(result.confidence_score * 100) : 0;
+
   return (
-    <div>
-      <section className="scanner-section">
-        <h1 className="scanner-title">🔍 Scan for Phishing Threats</h1>
-        <p className="scanner-subtitle">
-          Paste an email, SMS, or URL to analyze with our ML-powered detection
-          engine
-        </p>
+    <div className="scanner-page">
+      <div className="scanner-hero">
+        <div className="scanner-hero-icon">🛡️</div>
+        <h1 className="scanner-hero-title">Check if it&apos;s a Scam</h1>
+        <p className="scanner-hero-subtitle">Paste any suspicious email, text message, or website link below. Our AI will analyze it instantly and tell you if it&apos;s safe or dangerous.</p>
+      </div>
 
-        <div className="content-type-tabs">
-          <button
-            className={`tab-btn ${contentType === "email" ? "active" : ""}`}
-            onClick={() => setContentType("email")}
-          >
-            📧 Email
-          </button>
-          <button
-            className={`tab-btn ${contentType === "sms" ? "active" : ""}`}
-            onClick={() => setContentType("sms")}
-          >
-            📱 SMS
-          </button>
-          <button
-            className={`tab-btn ${contentType === "url" ? "active" : ""}`}
-            onClick={() => setContentType("url")}
-          >
-            🔗 URL
-          </button>
-        </div>
-
-        <div style={{ position: "relative" }}>
-          <textarea
-            className={`scan-input ${changeHighlight ? "input-changed-highlight" : ""} ${contentChanged ? "input-modified" : ""}`}
-            placeholder={placeholders[contentType]}
-            value={content}
-            onChange={handleContentChange}
-            maxLength={MAX_CONTENT_LENGTH}
-          />
-          {contentChanged && (
-            <div
-              className="change-badge"
-              onClick={handleChangedClick}
-              title="Content has been modified since last scan. Click to highlight changes."
-            >
-              ✏️ Content Modified — Click to Re-scan
-            </div>
-          )}
-        </div>
-
-        <div
-          style={{
-            fontSize: "0.75rem",
-            color: "#9CA39C",
-            textAlign: "right",
-            marginTop: "0.25rem",
-          }}
-        >
-          {content.length.toLocaleString()} /{" "}
-          {MAX_CONTENT_LENGTH.toLocaleString()} characters
-        </div>
-
-        {error && (
-          <div
-            style={{
-              color: "#EF4444",
-              marginTop: "1rem",
-              padding: "0.75rem",
-              background: "#FEE2E2",
-              borderRadius: "8px",
-            }}
-          >
-            ❌ {error}
+      <section className="scanner-card">
+        <div className="step-header">
+          <span className="step-number">1</span>
+          <div>
+            <h2 className="step-title">What do you want to check?</h2>
+            <p className="step-desc">Select the type of content you received</p>
           </div>
-        )}
+        </div>
+        <div className="content-type-selector">
+          {[
+            { key: "email", icon: "📧", label: "Email", desc: "Check if an email is phishing" },
+            { key: "sms", icon: "📱", label: "SMS / Text", desc: "Verify if a text message is a scam" },
+            { key: "url", icon: "🔗", label: "Website Link", desc: "Analyze a web link for threats" },
+          ].map((type) => (
+            <button key={type.key} className={`type-card ${contentType === type.key ? "active" : ""}`} onClick={() => setContentType(type.key)}>
+              <span className="type-icon">{type.icon}</span>
+              <span className="type-label">{type.label}</span>
+              <span className="type-desc">{type.desc}</span>
+            </button>
+          ))}
+        </div>
+      </section>
 
-        <button className="scan-btn" onClick={handleScan} disabled={loading}>
-          {loading ? (
-            <>
-              <span
-                className="spinner"
-                style={{ width: 20, height: 20, borderWidth: 2 }}
-              ></span>
-              Analyzing...
-            </>
-          ) : (
-            <>🛡️ Analyze Content</>
-          )}
+      <section className="scanner-card">
+        <div className="step-header">
+          <span className="step-number">2</span>
+          <div>
+            <h2 className="step-title">Paste the content</h2>
+            <p className="step-desc">Copy and paste the {contentType === "url" ? "link" : contentType} you want to check</p>
+          </div>
+        </div>
+        <div className="input-wrapper">
+          <textarea className={`scan-input ${contentChanged ? "input-modified" : ""}`} placeholder={placeholders[contentType]} value={content} onChange={handleContentChange} maxLength={MAX_CONTENT_LENGTH} />
+          {contentChanged && <div className="change-badge" onClick={handleScan}>✏️ Content changed — Click to re-scan</div>}
+        </div>
+        <div className="input-footer">
+          <span className="char-count">{content.length.toLocaleString()} / {MAX_CONTENT_LENGTH.toLocaleString()} characters</span>
+        </div>
+        {error && <div className="error-banner"><span className="error-icon">⚠️</span><span>{error}</span></div>}
+        <button className="scan-btn" onClick={handleScan} disabled={loading || !content.trim()}>
+          {loading ? (<><span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></span>Analyzing...</>) : (<>🔍 Analyze Now</>)}
         </button>
+        {loading && <div className="loading-info"><div className="loading-dots"><span></span><span></span><span></span></div><p>Our AI is checking for phishing patterns, suspicious links, and known scam tactics...</p></div>}
       </section>
 
       {result && (
-        <section className="results-section">
-          <div className="result-header">
-            <div className={`result-badge ${result.classification}`}>
-              {getClassificationEmoji(result.classification)}{" "}
-              {result.classification.toUpperCase()}
-            </div>
-
-            <div className="confidence-meter">
-              <div className="confidence-label">
-                Confidence: {Math.round(result.confidence_score * 100)}%
-              </div>
-              <div className="confidence-bar">
-                <div
-                  className={`confidence-fill ${
-                    result.confidence_score < 0.3
-                      ? "low"
-                      : result.confidence_score < 0.6
-                        ? "medium"
-                        : "high"
-                  }`}
-                  style={{ width: `${result.confidence_score * 100}%` }}
-                />
-              </div>
-            </div>
-
-            <div
-              style={{
-                padding: "0.5rem 1rem",
-                background: "#F3F4F3",
-                borderRadius: "8px",
-                fontSize: "0.875rem",
-              }}
-            >
-              Risk Level: <strong>{result.risk_level.toUpperCase()}</strong>
-            </div>
-          </div>
-
-          <div className="result-explanation">
-            <h4>Analysis Summary</h4>
-            <p>{result.explanation}</p>
-          </div>
-
-          {result.threat_indicators && result.threat_indicators.length > 0 && (
-            <div className="threat-indicators">
-              <h4>
-                ⚠️ Threat Indicators Detected ({result.threat_indicators.length}
-                )
-              </h4>
-              <div className="indicator-list">
-                {result.threat_indicators.map((indicator, index) => (
-                  <div
-                    key={index}
-                    className={`indicator-item ${indicator.severity}`}
-                  >
-                    <div>
-                      <div className="indicator-category">
-                        {indicator.category}
-                      </div>
-                      <div className="indicator-description">
-                        {indicator.description}
-                      </div>
-                      {indicator.matched_text && (
-                        <div
-                          style={{
-                            marginTop: "0.25rem",
-                            fontFamily: "monospace",
-                            fontSize: "0.8rem",
-                            color: "#6B736B",
-                          }}
-                        >
-                          Matched: "{indicator.matched_text}"
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {result.recommendations && result.recommendations.length > 0 && (
-            <div className="recommendations">
-              <h4>📋 Recommendations</h4>
-              <ul>
-                {result.recommendations.map((rec, index) => (
-                  <li key={index}>{rec}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* ML Features Section */}
-          {result.ml_features && (
-            <div className="ml-features-section">
-              <h4>🤖 ML Analysis Details</h4>
-
-              <div className="ml-features-grid">
-                {/* ML Probability */}
-                <div className="ml-feature-card">
-                  <div className="ml-feature-title">
-                    ML Phishing Probability
-                  </div>
-                  <div
-                    className={`ml-probability ${result.ml_features.ml_phishing_probability > 0.6 ? "danger" : result.ml_features.ml_phishing_probability > 0.3 ? "warning" : "safe"}`}
-                  >
-                    {Math.round(
-                      result.ml_features.ml_phishing_probability * 100,
-                    )}
-                    %
-                  </div>
-                  <div className="ml-feature-subtitle">
-                    Model: {result.ml_features.model_used}
+        <div ref={resultRef}>
+          {(() => {
+            const config = getResultConfig(result.classification);
+            return (<>
+              <section className="result-verdict" style={{ background: config.bg, borderColor: config.border }}>
+                <div className="verdict-main">
+                  <span className="verdict-emoji">{config.emoji}</span>
+                  <div className="verdict-text">
+                    <h2 className="verdict-title" style={{ color: config.color }}>{config.title}</h2>
+                    <p className="verdict-message">{config.message}</p>
                   </div>
                 </div>
-
-                {/* SSL Status */}
-                {result.ml_features.ssl_status && (
-                  <div className="ml-feature-card">
-                    <div className="ml-feature-title">🔒 SSL/TLS Status</div>
-                    <div
-                      className={`ssl-status ${result.ml_features.ssl_status.ssl_valid ? "valid" : result.ml_features.ssl_status.has_ssl ? "invalid" : "none"}`}
-                    >
-                      {result.ml_features.ssl_status.ssl_valid
-                        ? "✅ Valid"
-                        : result.ml_features.ssl_status.has_ssl
-                          ? "⚠️ Invalid"
-                          : "❌ No SSL"}
+                <div className="verdict-action" style={{ borderColor: config.border }}>
+                  <strong>What should you do?</strong> {config.action}
+                </div>
+                <div className="threat-gauge-wrapper">
+                  <div className="threat-gauge-labels"><span>Safe</span><span>Suspicious</span><span>Dangerous</span></div>
+                  <div className="threat-gauge">
+                    <div className="threat-gauge-track">
+                      <div className="threat-gauge-safe"></div>
+                      <div className="threat-gauge-warn"></div>
+                      <div className="threat-gauge-danger"></div>
                     </div>
-                    {result.ml_features.ssl_status.ssl_issuer && (
-                      <div className="ml-feature-subtitle">
-                        Issuer: {result.ml_features.ssl_status.ssl_issuer}
-                      </div>
-                    )}
-                    {result.ml_features.ssl_status.ssl_expiry_days !== null && (
-                      <div className="ml-feature-subtitle">
-                        Expires in:{" "}
-                        {result.ml_features.ssl_status.ssl_expiry_days} days
-                      </div>
-                    )}
+                    <div className="threat-gauge-needle" style={{ left: `${Math.min(confidencePercent, 100)}%` }}>
+                      <div className="needle-dot"></div>
+                      <div className="needle-label">{confidencePercent}%</div>
+                    </div>
                   </div>
-                )}
+                  <p className="gauge-explain">
+                    Threat Score: {confidencePercent}% — {confidencePercent < 20 ? "Very low risk" : confidencePercent < 40 ? "Low risk" : confidencePercent < 60 ? "Moderate risk" : confidencePercent < 80 ? "High risk" : "Very high risk — dangerous!"}
+                  </p>
+                </div>
+              </section>
 
-                {/* Domain Age */}
-                {result.ml_features.domain_age &&
-                  result.ml_features.domain_age.domain_age_days !== null && (
-                    <div className="ml-feature-card">
-                      <div className="ml-feature-title">📅 Domain Age</div>
-                      <div
-                        className={`domain-age ${result.ml_features.domain_age.domain_age_days > 365 ? "old" : result.ml_features.domain_age.domain_age_days > 30 ? "medium" : "new"}`}
-                      >
-                        {result.ml_features.domain_age.domain_age_days > 365
-                          ? `${Math.floor(result.ml_features.domain_age.domain_age_days / 365)} years old`
-                          : `${result.ml_features.domain_age.domain_age_days} days old`}
-                      </div>
-                      {result.ml_features.domain_age.registration_date && (
-                        <div className="ml-feature-subtitle">
-                          Registered:{" "}
-                          {result.ml_features.domain_age.registration_date}
-                        </div>
-                      )}
-                      {result.ml_features.domain_age.registrar && (
-                        <div className="ml-feature-subtitle">
-                          Registrar: {result.ml_features.domain_age.registrar}
-                        </div>
-                      )}
-                    </div>
-                  )}
-              </div>
-
-              {/* Top ML Features */}
-              {result.ml_features.top_ml_features &&
-                result.ml_features.top_ml_features.length > 0 && (
-                  <div className="top-features">
-                    <h5>📊 Top ML Feature Importances</h5>
-                    <div className="feature-bars">
-                      {result.ml_features.top_ml_features.map((feat, i) => (
-                        <div key={i} className="feature-bar-item">
-                          <span className="feature-name">
-                            {feat.feature.replace(/_/g, " ")}
-                          </span>
-                          <div className="feature-bar-bg">
-                            <div
-                              className="feature-bar-fill"
-                              style={{
-                                width: `${Math.min(feat.importance * 500, 100)}%`,
-                              }}
-                            />
+              {result.threat_indicators && result.threat_indicators.length > 0 && (
+                <section className="scanner-card findings-card">
+                  <h3 className="findings-title">🔎 What We Found <span className="findings-count">{result.threat_indicators.length} issue{result.threat_indicators.length !== 1 ? "s" : ""}</span></h3>
+                  <p className="findings-subtitle">Here are the specific warning signs detected in your content:</p>
+                  <div className="findings-list">
+                    {result.threat_indicators.map((indicator, index) => {
+                      const sev = getSeverityLabel(indicator.severity);
+                      return (
+                        <div key={index} className={`finding-item severity-${indicator.severity}`}>
+                          <div className="finding-header">
+                            <span className="finding-severity" style={{ color: sev.color, background: sev.bg }}>{sev.label}</span>
+                            <span className="finding-category">{indicator.category}</span>
                           </div>
-                          <span className="feature-value">
-                            {(feat.importance * 100).toFixed(1)}%
-                          </span>
+                          <p className="finding-description">{indicator.description}</p>
+                          {indicator.matched_text && <div className="finding-evidence"><span className="evidence-label">Evidence:</span><code className="evidence-text">&quot;{indicator.matched_text}&quot;</code></div>}
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {(!result.threat_indicators || result.threat_indicators.length === 0) && result.classification === "safe" && (
+                <section className="scanner-card safe-card">
+                  <div className="safe-icon">🎉</div>
+                  <h3>No Threats Found</h3>
+                  <p>We checked against our database of known phishing patterns, suspicious links, and scam tactics. No warning signs were detected.</p>
+                  <p className="safe-reminder">💡 <strong>Remember:</strong> Always be cautious with unsolicited messages. If something feels off, trust your instincts.</p>
+                </section>
+              )}
+
+              {result.recommendations && result.recommendations.length > 0 && (
+                <section className="scanner-card">
+                  <h3 className="rec-title">📋 What To Do Next</h3>
+                  <div className="rec-list">
+                    {result.recommendations.map((rec, index) => (
+                      <div key={index} className="rec-item"><span className="rec-number">{index + 1}</span><span className="rec-text">{rec}</span></div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <section className="scanner-card technical-section">
+                <button className="technical-toggle" onClick={() => setShowTechnical(!showTechnical)}>
+                  <span>🤖 Technical Details</span>
+                  <span className="toggle-hint">{showTechnical ? "Hide" : "Show"} how our AI analyzed this</span>
+                  <span className={`toggle-arrow ${showTechnical ? "open" : ""}`}>▼</span>
+                </button>
+                {showTechnical && (
+                  <div className="technical-content">
+                    {result.analysis_details && (
+                      <div className="tech-block">
+                        <h4>⚖️ How We Scored This</h4>
+                        <p className="tech-explain">We use two detection methods and combine their results:</p>
+                        <div className="score-breakdown">
+                          <div className="score-row"><div className="score-info"><span className="score-label">Pattern Matching</span><span className="score-desc">Checks against 200+ known phishing patterns</span></div><div className="score-bar-wrapper"><div className="score-bar"><div className="score-bar-fill heuristic" style={{ width: `${Math.round((result.analysis_details.heuristic_score || 0) * 100)}%` }} /></div><span className="score-pct">{Math.round((result.analysis_details.heuristic_score || 0) * 100)}%</span></div></div>
+                          <div className="score-row"><div className="score-info"><span className="score-label">Machine Learning</span><span className="score-desc">AI trained on thousands of real phishing samples</span></div><div className="score-bar-wrapper"><div className="score-bar"><div className="score-bar-fill ml" style={{ width: `${Math.round((result.analysis_details.ml_score || 0) * 100)}%` }} /></div><span className="score-pct">{Math.round((result.analysis_details.ml_score || 0) * 100)}%</span></div></div>
+                          <div className="score-row combined-row"><div className="score-info"><span className="score-label">Final Score</span><span className="score-desc">Combined analysis result</span></div><div className="score-bar-wrapper"><div className="score-bar"><div className="score-bar-fill combined" style={{ width: `${Math.round((result.analysis_details.combined_score || 0) * 100)}%` }} /></div><span className="score-pct">{Math.round((result.analysis_details.combined_score || 0) * 100)}%</span></div></div>
+                        </div>
+                      </div>
+                    )}
+                    {result.ml_features && (<>
+                      <div className="tech-block">
+                        <h4>🧠 AI Model Details</h4>
+                        <div className="tech-stats">
+                          <div className="tech-stat"><span className="tech-stat-label">Model</span><span className="tech-stat-value">{result.ml_features.model_used}</span></div>
+                          <div className="tech-stat"><span className="tech-stat-label">AI Confidence</span><span className="tech-stat-value">{Math.round(result.ml_features.ml_phishing_probability * 100)}% phishing</span></div>
+                          <div className="tech-stat"><span className="tech-stat-label">Features</span><span className="tech-stat-value">{result.analysis_details?.features_extracted || 0} analyzed</span></div>
+                        </div>
+                      </div>
+                      {result.ml_features.ssl_status && (
+                        <div className="tech-block">
+                          <h4>🔒 Website Security</h4>
+                          <div className="tech-stats">
+                            <div className="tech-stat"><span className="tech-stat-label">SSL Certificate</span><span className={`tech-stat-value ${result.ml_features.ssl_status.ssl_valid ? "text-safe" : "text-danger"}`}>{result.ml_features.ssl_status.ssl_valid ? "✅ Valid & Secure" : result.ml_features.ssl_status.has_ssl ? "⚠️ Invalid" : "❌ Not Secure"}</span></div>
+                            {result.ml_features.ssl_status.ssl_issuer && <div className="tech-stat"><span className="tech-stat-label">Issued By</span><span className="tech-stat-value">{result.ml_features.ssl_status.ssl_issuer}</span></div>}
+                            {result.ml_features.ssl_status.ssl_expiry_days !== null && <div className="tech-stat"><span className="tech-stat-label">Expires In</span><span className="tech-stat-value">{result.ml_features.ssl_status.ssl_expiry_days} days</span></div>}
+                          </div>
+                        </div>
+                      )}
+                      {result.ml_features.domain_age && result.ml_features.domain_age.domain_age_days !== null && (
+                        <div className="tech-block">
+                          <h4>📅 Domain Age</h4>
+                          <div className="tech-stats">
+                            <div className="tech-stat"><span className="tech-stat-label">Age</span><span className={`tech-stat-value ${result.ml_features.domain_age.domain_age_days > 365 ? "text-safe" : "text-danger"}`}>{result.ml_features.domain_age.domain_age_days > 365 ? `${Math.floor(result.ml_features.domain_age.domain_age_days / 365)} years — Established` : `${result.ml_features.domain_age.domain_age_days} days — New domain ⚠️`}</span></div>
+                          </div>
+                        </div>
+                      )}
+                      {result.ml_features.top_ml_features && result.ml_features.top_ml_features.length > 0 && (
+                        <div className="tech-block">
+                          <h4>📊 Key Detection Signals</h4>
+                          <div className="feature-bars">{result.ml_features.top_ml_features.map((feat, i) => (<div key={i} className="feature-bar-item"><span className="feature-name">{feat.feature.replace(/_/g, " ")}</span><div className="feature-bar-bg"><div className="feature-bar-fill" style={{ width: `${Math.min(feat.importance * 500, 100)}%` }} /></div><span className="feature-value">{(feat.importance * 100).toFixed(1)}%</span></div>))}</div>
+                        </div>
+                      )}
+                      {result.ml_features.lexical_features && (
+                        <details className="raw-features"><summary>🔤 Lexical Features ({Object.keys(result.ml_features.lexical_features).length})</summary><div className="features-table">{Object.entries(result.ml_features.lexical_features).map(([key, value]) => (<div key={key} className="feature-row"><span className="feature-key">{key.replace(/_/g, " ")}</span><span className="feature-val">{typeof value === "number" ? value.toFixed(4) : String(value)}</span></div>))}</div></details>
+                      )}
+                      {result.ml_features.text_features && (
+                        <details className="raw-features"><summary>📝 Text Features ({Object.keys(result.ml_features.text_features).length})</summary><div className="features-table">{Object.entries(result.ml_features.text_features).map(([key, value]) => (<div key={key} className="feature-row"><span className="feature-key">{key.replace(/_/g, " ")}</span><span className="feature-val">{typeof value === "number" ? value.toFixed(4) : String(value)}</span></div>))}</div></details>
+                      )}
+                    </>)}
                   </div>
                 )}
+              </section>
+            </>);
+          })()}
+        </div>
+      )}
 
-              {/* Scoring Breakdown */}
-              {result.analysis_details && (
-                <div className="scoring-breakdown">
-                  <h5>⚖️ Scoring Breakdown</h5>
-                  <div className="score-items">
-                    <div className="score-item">
-                      <span>Heuristic Score</span>
-                      <span className="score-value">
-                        {Math.round(
-                          (result.analysis_details.heuristic_score || 0) * 100,
-                        )}
-                        %
-                      </span>
-                    </div>
-                    <div className="score-item">
-                      <span>ML Score</span>
-                      <span className="score-value">
-                        {Math.round(
-                          (result.analysis_details.ml_score || 0) * 100,
-                        )}
-                        %
-                      </span>
-                    </div>
-                    <div className="score-item combined">
-                      <span>Combined (40% heuristic + 60% ML)</span>
-                      <span className="score-value">
-                        {Math.round(
-                          (result.analysis_details.combined_score || 0) * 100,
-                        )}
-                        %
-                      </span>
-                    </div>
-                    <div className="score-item">
-                      <span>Features Extracted</span>
-                      <span className="score-value">
-                        {result.analysis_details.features_extracted || 0}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Lexical Features Summary (for URLs) */}
-              {result.ml_features.lexical_features && (
-                <details className="features-details">
-                  <summary>
-                    🔤 Lexical Features (
-                    {Object.keys(result.ml_features.lexical_features).length}{" "}
-                    extracted)
-                  </summary>
-                  <div className="features-table">
-                    {Object.entries(result.ml_features.lexical_features).map(
-                      ([key, value]) => (
-                        <div key={key} className="feature-row">
-                          <span className="feature-key">
-                            {key.replace(/_/g, " ")}
-                          </span>
-                          <span className="feature-val">
-                            {typeof value === "number"
-                              ? value.toFixed(4)
-                              : String(value)}
-                          </span>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                </details>
-              )}
-
-              {/* Text Features Summary (for SMS/Email) */}
-              {result.ml_features.text_features && (
-                <details className="features-details">
-                  <summary>
-                    📝 Text NLP Features (
-                    {Object.keys(result.ml_features.text_features).length}{" "}
-                    extracted)
-                  </summary>
-                  <div className="features-table">
-                    {Object.entries(result.ml_features.text_features).map(
-                      ([key, value]) => (
-                        <div key={key} className="feature-row">
-                          <span className="feature-key">
-                            {key.replace(/_/g, " ")}
-                          </span>
-                          <span className="feature-val">
-                            {typeof value === "number"
-                              ? value.toFixed(4)
-                              : String(value)}
-                          </span>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                </details>
-              )}
-            </div>
-          )}
+      {!result && !loading && (
+        <section className="how-it-works">
+          <h3 className="hiw-title">How It Works</h3>
+          <div className="hiw-steps">
+            <div className="hiw-step"><div className="hiw-icon">📋</div><h4>1. Paste</h4><p>Copy the suspicious email, text message, or link</p></div>
+            <div className="hiw-arrow">→</div>
+            <div className="hiw-step"><div className="hiw-icon">🤖</div><h4>2. Analyze</h4><p>Our AI scans for 200+ phishing patterns and tactics</p></div>
+            <div className="hiw-arrow">→</div>
+            <div className="hiw-step"><div className="hiw-icon">🛡️</div><h4>3. Know</h4><p>Get a clear verdict: Safe, Suspicious, or Phishing</p></div>
+          </div>
         </section>
       )}
     </div>
