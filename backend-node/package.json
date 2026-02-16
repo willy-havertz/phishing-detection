@@ -1,7 +1,7 @@
 {
-  "name": "phishguard-api",
+  "name": "threatlens-api",
   "version": "1.0.0",
-  "description": "PhishGuard API Gateway - AI Phishing Detection Platform",
+  "description": "ThreatLens API Gateway - ML Phishing & Smishing Detection Platform",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
@@ -24,6 +24,6 @@
     "ai",
     "cybersecurity"
   ],
-  "author": "PhishGuard Team",
+  "author": "ThreatLens Team",
   "license": "MIT"
 }

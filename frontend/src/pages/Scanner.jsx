@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { saveScan } from "../utils/scanStorage";
 import { sanitizeInput, createRateLimiter } from "../utils/security";
 
@@ -17,12 +17,31 @@ function Scanner() {
   const [error, setError] = useState(null);
   const abortControllerRef = useRef(null);
 
+  // Change detection state
+  const [lastScannedContent, setLastScannedContent] = useState("");
+  const [contentChanged, setContentChanged] = useState(false);
+  const [changeHighlight, setChangeHighlight] = useState(false);
+
+  // Detect content changes after scan
+  useEffect(() => {
+    if (lastScannedContent && content !== lastScannedContent && result) {
+      setContentChanged(true);
+    } else {
+      setContentChanged(false);
+    }
+  }, [content, lastScannedContent, result]);
+
   const handleContentChange = (e) => {
     const value = e.target.value;
     // Limit input length
     if (value.length <= MAX_CONTENT_LENGTH) {
       setContent(value);
     }
+  };
+
+  const handleChangedClick = () => {
+    setChangeHighlight(true);
+    setTimeout(() => setChangeHighlight(false), 1500);
   };
 
   const handleScan = async () => {
@@ -81,6 +100,8 @@ function Scanner() {
 
       const data = await response.json();
       setResult(data);
+      setLastScannedContent(sanitizedContent);
+      setContentChanged(false);
 
       // Save scan to localStorage for real-time Dashboard/History
       saveScan({
@@ -129,7 +150,8 @@ function Scanner() {
       <section className="scanner-section">
         <h1 className="scanner-title">🔍 Scan for Phishing Threats</h1>
         <p className="scanner-subtitle">
-          Paste an email, SMS, or URL to check if it's a phishing attempt
+          Paste an email, SMS, or URL to analyze with our ML-powered detection
+          engine
         </p>
 
         <div className="content-type-tabs">
@@ -153,13 +175,24 @@ function Scanner() {
           </button>
         </div>
 
-        <textarea
-          className="scan-input"
-          placeholder={placeholders[contentType]}
-          value={content}
-          onChange={handleContentChange}
-          maxLength={MAX_CONTENT_LENGTH}
-        />
+        <div style={{ position: "relative" }}>
+          <textarea
+            className={`scan-input ${changeHighlight ? "input-changed-highlight" : ""} ${contentChanged ? "input-modified" : ""}`}
+            placeholder={placeholders[contentType]}
+            value={content}
+            onChange={handleContentChange}
+            maxLength={MAX_CONTENT_LENGTH}
+          />
+          {contentChanged && (
+            <div
+              className="change-badge"
+              onClick={handleChangedClick}
+              title="Content has been modified since last scan. Click to highlight changes."
+            >
+              ✏️ Content Modified — Click to Re-scan
+            </div>
+          )}
+        </div>
 
         <div
           style={{
@@ -291,6 +324,210 @@ function Scanner() {
                   <li key={index}>{rec}</li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {/* ML Features Section */}
+          {result.ml_features && (
+            <div className="ml-features-section">
+              <h4>🤖 ML Analysis Details</h4>
+
+              <div className="ml-features-grid">
+                {/* ML Probability */}
+                <div className="ml-feature-card">
+                  <div className="ml-feature-title">
+                    ML Phishing Probability
+                  </div>
+                  <div
+                    className={`ml-probability ${result.ml_features.ml_phishing_probability > 0.6 ? "danger" : result.ml_features.ml_phishing_probability > 0.3 ? "warning" : "safe"}`}
+                  >
+                    {Math.round(
+                      result.ml_features.ml_phishing_probability * 100,
+                    )}
+                    %
+                  </div>
+                  <div className="ml-feature-subtitle">
+                    Model: {result.ml_features.model_used}
+                  </div>
+                </div>
+
+                {/* SSL Status */}
+                {result.ml_features.ssl_status && (
+                  <div className="ml-feature-card">
+                    <div className="ml-feature-title">🔒 SSL/TLS Status</div>
+                    <div
+                      className={`ssl-status ${result.ml_features.ssl_status.ssl_valid ? "valid" : result.ml_features.ssl_status.has_ssl ? "invalid" : "none"}`}
+                    >
+                      {result.ml_features.ssl_status.ssl_valid
+                        ? "✅ Valid"
+                        : result.ml_features.ssl_status.has_ssl
+                          ? "⚠️ Invalid"
+                          : "❌ No SSL"}
+                    </div>
+                    {result.ml_features.ssl_status.ssl_issuer && (
+                      <div className="ml-feature-subtitle">
+                        Issuer: {result.ml_features.ssl_status.ssl_issuer}
+                      </div>
+                    )}
+                    {result.ml_features.ssl_status.ssl_expiry_days !== null && (
+                      <div className="ml-feature-subtitle">
+                        Expires in:{" "}
+                        {result.ml_features.ssl_status.ssl_expiry_days} days
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Domain Age */}
+                {result.ml_features.domain_age &&
+                  result.ml_features.domain_age.domain_age_days !== null && (
+                    <div className="ml-feature-card">
+                      <div className="ml-feature-title">📅 Domain Age</div>
+                      <div
+                        className={`domain-age ${result.ml_features.domain_age.domain_age_days > 365 ? "old" : result.ml_features.domain_age.domain_age_days > 30 ? "medium" : "new"}`}
+                      >
+                        {result.ml_features.domain_age.domain_age_days > 365
+                          ? `${Math.floor(result.ml_features.domain_age.domain_age_days / 365)} years old`
+                          : `${result.ml_features.domain_age.domain_age_days} days old`}
+                      </div>
+                      {result.ml_features.domain_age.registration_date && (
+                        <div className="ml-feature-subtitle">
+                          Registered:{" "}
+                          {result.ml_features.domain_age.registration_date}
+                        </div>
+                      )}
+                      {result.ml_features.domain_age.registrar && (
+                        <div className="ml-feature-subtitle">
+                          Registrar: {result.ml_features.domain_age.registrar}
+                        </div>
+                      )}
+                    </div>
+                  )}
+              </div>
+
+              {/* Top ML Features */}
+              {result.ml_features.top_ml_features &&
+                result.ml_features.top_ml_features.length > 0 && (
+                  <div className="top-features">
+                    <h5>📊 Top ML Feature Importances</h5>
+                    <div className="feature-bars">
+                      {result.ml_features.top_ml_features.map((feat, i) => (
+                        <div key={i} className="feature-bar-item">
+                          <span className="feature-name">
+                            {feat.feature.replace(/_/g, " ")}
+                          </span>
+                          <div className="feature-bar-bg">
+                            <div
+                              className="feature-bar-fill"
+                              style={{
+                                width: `${Math.min(feat.importance * 500, 100)}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="feature-value">
+                            {(feat.importance * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              {/* Scoring Breakdown */}
+              {result.analysis_details && (
+                <div className="scoring-breakdown">
+                  <h5>⚖️ Scoring Breakdown</h5>
+                  <div className="score-items">
+                    <div className="score-item">
+                      <span>Heuristic Score</span>
+                      <span className="score-value">
+                        {Math.round(
+                          (result.analysis_details.heuristic_score || 0) * 100,
+                        )}
+                        %
+                      </span>
+                    </div>
+                    <div className="score-item">
+                      <span>ML Score</span>
+                      <span className="score-value">
+                        {Math.round(
+                          (result.analysis_details.ml_score || 0) * 100,
+                        )}
+                        %
+                      </span>
+                    </div>
+                    <div className="score-item combined">
+                      <span>Combined (40% heuristic + 60% ML)</span>
+                      <span className="score-value">
+                        {Math.round(
+                          (result.analysis_details.combined_score || 0) * 100,
+                        )}
+                        %
+                      </span>
+                    </div>
+                    <div className="score-item">
+                      <span>Features Extracted</span>
+                      <span className="score-value">
+                        {result.analysis_details.features_extracted || 0}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Lexical Features Summary (for URLs) */}
+              {result.ml_features.lexical_features && (
+                <details className="features-details">
+                  <summary>
+                    🔤 Lexical Features (
+                    {Object.keys(result.ml_features.lexical_features).length}{" "}
+                    extracted)
+                  </summary>
+                  <div className="features-table">
+                    {Object.entries(result.ml_features.lexical_features).map(
+                      ([key, value]) => (
+                        <div key={key} className="feature-row">
+                          <span className="feature-key">
+                            {key.replace(/_/g, " ")}
+                          </span>
+                          <span className="feature-val">
+                            {typeof value === "number"
+                              ? value.toFixed(4)
+                              : String(value)}
+                          </span>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </details>
+              )}
+
+              {/* Text Features Summary (for SMS/Email) */}
+              {result.ml_features.text_features && (
+                <details className="features-details">
+                  <summary>
+                    📝 Text NLP Features (
+                    {Object.keys(result.ml_features.text_features).length}{" "}
+                    extracted)
+                  </summary>
+                  <div className="features-table">
+                    {Object.entries(result.ml_features.text_features).map(
+                      ([key, value]) => (
+                        <div key={key} className="feature-row">
+                          <span className="feature-key">
+                            {key.replace(/_/g, " ")}
+                          </span>
+                          <span className="feature-val">
+                            {typeof value === "number"
+                              ? value.toFixed(4)
+                              : String(value)}
+                          </span>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </details>
+              )}
             </div>
           )}
         </section>
