@@ -1145,6 +1145,8 @@ class ThreatIndicator(BaseModel):
 
 class MLFeatures(BaseModel):
     """ML-extracted features returned to frontend"""
+    model_config = {"protected_namespaces": ()}
+    
     lexical_features: Optional[Dict[str, float]] = None
     text_features: Optional[Dict[str, float]] = None
     ssl_status: Optional[Dict] = None
