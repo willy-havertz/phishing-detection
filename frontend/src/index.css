@@ -1,3 +1,48 @@
+/* ==================== ADVANCED RESPONSIVE BREAKPOINTS ==================== */
+@media (min-width: 1400px) {
+  .main-content, .footer-content { max-width: 1600px; }
+  .charts-grid { grid-template-columns: repeat(3, 1fr); }
+  .stats-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (max-width: 1024px) {
+  .main-content { padding: 0.5rem; }
+  .charts-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .protection-grid, .kenya-grid, .tactics-grid, .quiz-grid, .quick-ref-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  html { font-size: 15px; }
+  .main-content { padding: 0.25rem; }
+  .header, .footer { padding-left: 0.5rem; padding-right: 0.5rem; }
+  .scanner-card, .chart-card, .quiz-card, .kenya-card, .tactic-card, .protection-step {
+    padding: 1rem;
+  }
+  .scanner-hero-title, .page-title { font-size: 1.2rem; }
+  .stat-value { font-size: 1.1rem; }
+}
+
+@media (orientation: landscape) and (max-width: 900px) {
+  .main-content { padding: 0.25rem; }
+  .charts-grid, .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .footer-main { flex-direction: column; gap: 0.25rem; }
+}
+
+/* Touch target and font scaling improvements */
+.nav-link, .scan-btn, .clear-btn, .filter-chip, .quiz-option, .change-badge {
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 1em;
+}
+
+input, button, textarea {
+  font-size: 1em;
+}
 /* ============================================================
    ThreatLens — Complete UI Stylesheet
    Colors: #ACC8A2 (primary green) & #1A2517 (dark green)
