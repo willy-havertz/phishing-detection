@@ -1,8 +1,8 @@
-# 🔬 PhishGuard Detection Guide
+# 🔬 ThreatLens Detection Guide
 
-## How PhishGuard Detects Phishing & Smishing
+## How ThreatLens Detects Phishing & Smishing
 
-This document provides a complete technical breakdown of the AI detection techniques, algorithms, and tools used in PhishGuard to identify phishing emails, SMS smishing, and malicious URLs.
+This document provides a complete technical breakdown of the AI/ML detection techniques, algorithms, and tools used in ThreatLens v3.0 to identify phishing emails, SMS smishing, and malicious URLs.
 
 ---
 
@@ -10,7 +10,17 @@ This document provides a complete technical breakdown of the AI detection techni
 
 1. [Detection Architecture Overview](#detection-architecture-overview)
 2. [Tools & Technologies Used](#tools--technologies-used)
-3. [Detection Modules](#detection-modules)
+3. [Machine Learning Models](#machine-learning-models)
+   - [URL Classifier (Random Forest)](#url-classifier-random-forest)
+   - [Text Classifier (Gradient Boosting)](#text-classifier-gradient-boosting)
+   - [Training Datasets](#training-datasets)
+4. [Feature Extraction](#feature-extraction)
+   - [Lexical Feature Extractor (35 URL Features)](#lexical-feature-extractor-35-url-features)
+   - [Text Feature Extractor (30+ NLP Features)](#text-feature-extractor-30-nlp-features)
+5. [Infrastructure Checks](#infrastructure-checks)
+   - [SSL/TLS Certificate Validation](#ssltls-certificate-validation)
+   - [Domain Age Analysis (WHOIS)](#domain-age-analysis-whois)
+6. [Heuristic Detection Modules](#heuristic-detection-modules)
    - [Urgency Language Analysis](#1-urgency-language-analysis)
    - [Credential Harvesting Detection](#2-credential-harvesting-detection)
    - [Threat Pattern Matching](#3-threat-pattern-matching)
@@ -18,29 +28,29 @@ This document provides a complete technical breakdown of the AI detection techni
    - [Homograph Attack Detection](#5-homograph-attack-detection)
    - [Typosquatting Detection](#6-typosquatting-detection)
    - [Kenya-Specific Target Detection](#7-kenya-specific-target-detection)
-   - [SMS Scam Pattern Detection](#8-sms-scam-pattern-detection)
+   - [Suspicious Pattern Detection](#8-suspicious-pattern-detection)
    - [Link-Text Mismatch Detection](#9-link-text-mismatch-detection)
    - [Financial Request Detection](#10-financial-request-detection)
    - [Shannon Entropy Analysis](#11-shannon-entropy-analysis)
-   - [Suspicious Pattern Detection](#12-suspicious-pattern-detection)
-4. [Risk Scoring Algorithm](#risk-scoring-algorithm)
-5. [Classification System](#classification-system)
-6. [Explainable AI Output](#explainable-ai-output)
-7. [Security Layer](#security-layer)
-8. [Real-World Examples](#real-world-examples)
-9. [Limitations & Future Work](#limitations--future-work)
+7. [Ensemble Scoring Algorithm](#ensemble-scoring-algorithm)
+8. [Classification System](#classification-system)
+9. [Explainable AI Output](#explainable-ai-output)
+10. [Security Layer](#security-layer)
+11. [Real-World Examples](#real-world-examples)
+12. [Limitations & Future Work](#limitations--future-work)
 
 ---
 
 ## Detection Architecture Overview
 
-PhishGuard uses a **multi-layered heuristic detection engine** rather than a trained ML model. This approach was chosen because:
+ThreatLens v3.0 uses a **hybrid ensemble architecture** combining trained machine learning classifiers with a multi-layered heuristic detection engine. This approach was chosen because:
 
-- **No training data required** — works immediately on any content
-- **Explainable results** — each indicator is clearly described with severity
-- **Easy to extend** — new patterns can be added as rules
-- **Low resource usage** — runs on minimal hardware, no GPU needed
-- **Deterministic output** — same input always produces same result
+- **Best of both worlds** — ML catches subtle statistical patterns; heuristics catch known attack signatures
+- **Explainable results** — each threat indicator is clearly described with severity and confidence
+- **Trained on real data** — ML models train on real phishing URL and SMS spam datasets
+- **Graceful degradation** — synthetic data fallback if datasets are unavailable
+- **Kenya-focused context** — detects M-Pesa, Safaricom, KRA, and local bank scam patterns
+- **Infrastructure validation** — SSL/TLS and domain age checks for URLs
 
 ### Detection Pipeline
 
@@ -48,45 +58,46 @@ PhishGuard uses a **multi-layered heuristic detection engine** rather than a tra
 Input Content (email / SMS / URL)
          │
          ▼
-┌──────────────────────────────┐
-│  1. Input Sanitization       │  → Remove null bytes, validate length
-│  2. Content Type Detection   │  → email / sms / url
-└──────────────────────────────┘
+┌──────────────────────────────────┐
+│  1. Input Sanitization           │  → Null byte removal, length validation
+│  2. Content Type Detection       │  → email / sms / url
+└──────────────────────────────────┘
          │
          ▼
-┌──────────────────────────────┐
-│  3. Parallel Detection       │
-│  ┌─────────┬─────────┐      │
-│  │ Urgency │Credential│      │
-│  │ Analysis│Harvesting│      │
-│  ├─────────┼─────────┤      │
-│  │ Threat  │ URL      │      │
-│  │ Patterns│ Analysis │      │
-│  ├─────────┼─────────┤      │
-│  │Homograph│Typosquat │      │
-│  │Detection│Detection │      │
-│  ├─────────┼─────────┤      │
-│  │ Kenya   │ SMS Scam │      │
-│  │ Targets │ Patterns │      │
-│  ├─────────┼─────────┤      │
-│  │ Link    │Financial │      │
-│  │Mismatch │ Request  │      │
-│  ├─────────┼─────────┤      │
-│  │Entropy  │Suspicious│      │
-│  │Analysis │ Patterns │      │
-│  └─────────┴─────────┘      │
-└──────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  3. Parallel Detection (Two Tracks)                          │
+│                                                              │
+│  ╔══════════════════════════╗  ╔═══════════════════════════╗ │
+│  ║  TRACK A: ML MODELS     ║  ║  TRACK B: HEURISTIC RULES ║ │
+│  ║                         ║  ║                           ║ │
+│  ║  URL → LexicalExtractor ║  ║  Urgency Analysis         ║ │
+│  ║     → RandomForest      ║  ║  Credential Harvesting    ║ │
+│  ║     → SSL Checker       ║  ║  Threat Patterns          ║ │
+│  ║     → Domain Age        ║  ║  Advanced URL Analysis    ║ │
+│  ║                         ║  ║  Homograph Detection      ║ │
+│  ║  Text → TextExtractor   ║  ║  Typosquatting Detection  ║ │
+│  ║      → GradientBoosting ║  ║  Kenya Target Detection   ║ │
+│  ║                         ║  ║  Suspicious CTA Patterns  ║ │
+│  ║  Output: probability    ║  ║  Link Mismatch Detection  ║ │
+│  ║  + top features         ║  ║  Financial Request Det.   ║ │
+│  ║                         ║  ║  Impersonation Detection  ║ │
+│  ║                         ║  ║  Invoice/Delivery Scams   ║ │
+│  ║                         ║  ║  Subscription Scams       ║ │
+│  ║                         ║  ║  Investment/Prize Scams   ║ │
+│  ║                         ║  ║  SMS/Email-specific rules ║ │
+│  ╚══════════════════════════╝  ╚═══════════════════════════╝ │
+└──────────────────────────────────────────────────────────────┘
          │
          ▼
-┌──────────────────────────────┐
-│  4. Risk Score Calculation   │  → Weighted severity scoring
-│  5. Classification           │  → safe / suspicious / phishing
-│  6. Explanation Generation   │  → Human-readable threat report
-│  7. Recommendations          │  → Actionable safety advice
-└──────────────────────────────┘
+┌──────────────────────────────────┐
+│  4. Ensemble Score Fusion        │  → Weighted blend of ML + heuristic
+│  5. Classification               │  → safe / suspicious / phishing
+│  6. Explanation Generation       │  → Human-readable threat report
+│  7. Recommendations              │  → Actionable Kenya-focused advice
+└──────────────────────────────────┘
          │
          ▼
-    JSON Response
+    JSON Response (with ML features, indicators, score breakdown)
 ```
 
 ---
@@ -97,78 +108,271 @@ Input Content (email / SMS / URL)
 
 | Tool         | Version | Purpose                                          |
 | ------------ | ------- | ------------------------------------------------ |
-| **Python**   | 3.9+    | Runtime for the detection engine                 |
+| **Python**   | 3.9+    | Runtime for the ML + detection engine            |
 | **FastAPI**  | latest  | High-performance async web framework for the API |
-| **Uvicorn**  | latest  | ASGI server to serve FastAPI application         |
+| **Uvicorn**  | latest  | ASGI server to serve FastAPI                     |
 | **Pydantic** | v2      | Data validation for API requests and responses   |
+
+### Machine Learning Libraries
+
+| Tool             | Version | Purpose                                                            |
+| ---------------- | ------- | ------------------------------------------------------------------ |
+| **scikit-learn** | 1.4.0   | RandomForestClassifier, GradientBoostingClassifier, StandardScaler |
+| **numpy**        | 1.26.3  | Numerical operations, feature vector construction                  |
+
+### Optional Dependencies
+
+| Tool             | Purpose                                              |
+| ---------------- | ---------------------------------------------------- |
+| **python-whois** | WHOIS domain age lookup for newly registered domains |
 
 ### Python Standard Library Modules
 
-| Module                | Usage                                                                    |
-| --------------------- | ------------------------------------------------------------------------ |
-| `re` (regex)          | Pattern matching for phishing indicators (urgency, credentials, threats) |
-| `urllib.parse`        | URL parsing — extracting domain, path, query, fragments                  |
-| `math.log2`           | Shannon entropy calculation for domain randomness detection              |
-| `collections.Counter` | Character frequency counting for entropy analysis                        |
-| `datetime`            | Timestamps for API responses and rate limiting                           |
-| `os`                  | Environment variable reading for configuration                           |
-| `unicodedata`         | Unicode character name lookup for homograph detection                    |
-| `ipaddress`           | IP address validation for URL analysis                                   |
+| Module                | Usage                                                        |
+| --------------------- | ------------------------------------------------------------ |
+| `re` (regex)          | Pattern matching for phishing indicators (100+ patterns)     |
+| `urllib.parse`        | URL parsing — domain, path, query, fragment extraction       |
+| `math.log2`           | Shannon entropy calculation for randomness detection         |
+| `collections.Counter` | Character/word frequency counting for entropy + NLP analysis |
+| `csv`                 | Dataset loading for ML model training                        |
+| `ssl`                 | SSL/TLS certificate validation and inspection                |
+| `socket`              | Network connection for SSL certificate retrieval             |
+| `datetime`            | Timestamps, certificate expiry, domain age calculations      |
+| `os`                  | Environment variable reading for configuration               |
+| `unicodedata`         | Unicode character name lookup for homograph detection        |
+| `ipaddress`           | IP address validation for URL analysis                       |
 
-### Security Libraries
+### Security Middleware
 
-| Tool                             | Purpose                                             |
-| -------------------------------- | --------------------------------------------------- |
-| `fastapi.middleware.cors`        | Cross-Origin Resource Sharing control               |
-| `fastapi.middleware.trustedhost` | Host header validation                              |
-| Custom middleware                | Rate limiting, security headers, input sanitization |
+| Tool                             | Purpose                                                  |
+| -------------------------------- | -------------------------------------------------------- |
+| `fastapi.middleware.cors`        | Cross-Origin Resource Sharing control                    |
+| `fastapi.middleware.trustedhost` | Host header validation                                   |
+| Custom `rate_limiter`            | IP-based rate limiting (30 req/min, X-RateLimit headers) |
+| Custom `security_headers`        | CSP, X-Frame-Options, X-Content-Type-Options, HSTS       |
 
-### Frontend Detection Support
+### Frontend Security
 
 | Tool             | Purpose                                                 |
 | ---------------- | ------------------------------------------------------- |
 | `security.js`    | Client-side sanitization, rate limiting, secure storage |
-| `scanStorage.js` | localStorage persistence with data validation           |
+| `scanStorage.js` | localStorage persistence with CustomEvent sync          |
 
 ---
 
-## Detection Modules
+## Machine Learning Models
+
+ThreatLens trains two specialized ML classifiers at startup — one for URLs and one for text content (email/SMS).
+
+### URL Classifier (Random Forest)
+
+**Model**: `sklearn.ensemble.RandomForestClassifier`
+
+| Parameter       | Value          |
+| --------------- | -------------- |
+| n_estimators    | 100            |
+| max_depth       | 10             |
+| random_state    | 42             |
+| Feature scaling | StandardScaler |
+
+**Training process**:
+
+1. Loads `datasets/phishing_urls.csv` (labeled URL dataset with `url` and `label` columns)
+2. Extracts 35 lexical features per URL via `LexicalFeatureExtractor`
+3. Applies `StandardScaler` normalization
+4. Trains RandomForestClassifier
+5. Falls back to synthetic data generation (1,000 samples) if dataset is unavailable
+
+**Prediction output**: Phishing probability (0.0–1.0) + top 5 most important features for the prediction.
+
+```python
+# Prediction flow
+lexical_features = LexicalFeatureExtractor.extract_url_features(url)
+feature_vector = scaler.transform([feature_values])
+phishing_probability = model.predict_proba(feature_vector)[0][1]
+top_features = sorted(feature_importances, reverse=True)[:5]
+```
+
+---
+
+### Text Classifier (Gradient Boosting)
+
+**Model**: `sklearn.ensemble.GradientBoostingClassifier`
+
+| Parameter       | Value                                      |
+| --------------- | ------------------------------------------ |
+| n_estimators    | 150 (real data) / 100 (synthetic fallback) |
+| max_depth       | 6                                          |
+| learning_rate   | 0.1                                        |
+| random_state    | 42                                         |
+| Feature scaling | StandardScaler                             |
+
+**Training process**:
+
+1. Loads `datasets/sms_spam.csv` (UCI SMS Spam Collection — 5,574 records, tab-delimited)
+2. Labels: `ham` → 0 (legitimate), `spam` → 1 (phishing)
+3. Extracts 30+ NLP features per message via `TextFeatureExtractor`
+4. Applies `StandardScaler` normalization
+5. Trains GradientBoostingClassifier
+6. Falls back to synthetic data generation (1,000 samples) if dataset is unavailable
+
+**Prediction output**: Phishing probability (0.0–1.0) + top 5 most important features.
+
+---
+
+### Training Datasets
+
+| Dataset             | Records | Format            | Source                       |
+| ------------------- | ------- | ----------------- | ---------------------------- |
+| `phishing_urls.csv` | 208+    | CSV (url, label)  | Labeled phishing URL dataset |
+| `sms_spam.csv`      | 5,574   | TSV (label, text) | UCI SMS Spam Collection      |
+
+**Synthetic fallback**: If datasets are unavailable, both models generate 1,000 synthetic training samples (500 legitimate + 500 phishing) with statistically modeled feature distributions. This ensures the system always has working ML models.
+
+---
+
+## Feature Extraction
+
+### Lexical Feature Extractor (35 URL Features)
+
+**Class**: `LexicalFeatureExtractor`
+
+Extracts 35 numerical features from any URL for ML classification. No network requests required — purely structural/lexical analysis.
+
+| Category          | Features                                                                                                                             | Count |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| **Length**        | `url_length`, `domain_length`, `path_length`, `query_length`                                                                         | 4     |
+| **Counts**        | `dot_count`, `hyphen_count`, `underscore_count`, `slash_count`, `digit_count`, `special_char_count`, `param_count`, `fragment_count` | 8     |
+| **Ratios**        | `digit_ratio_domain`, `digit_ratio_url`, `special_char_ratio`                                                                        | 3     |
+| **Structural**    | `subdomain_count`, `has_ip_address`, `has_https`, `has_port`, `has_at_symbol`, `has_double_slash`                                    | 6     |
+| **TLD**           | `suspicious_tld`, `tld_length`                                                                                                       | 2     |
+| **Entropy**       | `domain_entropy`, `url_entropy`, `path_entropy`                                                                                      | 3     |
+| **Brand**         | `contains_brand`, `brand_in_subdomain`                                                                                               | 2     |
+| **Path Keywords** | `path_has_login`, `path_has_verify`, `path_has_secure`, `path_has_account`, `path_has_update`                                        | 5     |
+| **Shortener**     | `is_shortened`                                                                                                                       | 1     |
+
+**Entropy calculation** (Shannon entropy):
+
+$$H(X) = -\sum_{i=1}^{n} p(x_i) \log_2 p(x_i)$$
+
+High entropy in a domain name (> 3.5) indicates randomly generated strings, common in phishing domains.
+
+---
+
+### Text Feature Extractor (30+ NLP Features)
+
+**Class**: `TextFeatureExtractor`
+
+Extracts 30+ NLP and statistical features from email/SMS text content.
+
+**Word lists used for keyword density**:
+
+- **URGENCY_WORDS** (36 words): urgent, immediately, expire, deadline, suspended, ...
+- **CREDENTIAL_WORDS** (29 words): password, pin, otp, login, ssn, credit card, ...
+- **THREAT_WORDS** (24 words): suspend, terminate, block, unauthorized, fraud, ...
+- **REWARD_WORDS** (19 words): congratulations, winner, prize, bonus, free, lottery, ...
+
+| Category               | Features                                                                                                                                                             | Count |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| **Length**             | `text_length`, `word_count`, `unique_word_count`, `avg_word_length`, `max_word_length`, `sentence_count`, `avg_sentence_length`                                      | 7     |
+| **Character Ratios**   | `caps_ratio`, `digit_ratio`, `special_char_ratio`, `whitespace_ratio`                                                                                                | 4     |
+| **Punctuation**        | `exclamation_count`, `question_mark_count`, `ellipsis_count`, `dollar_sign_count`                                                                                    | 4     |
+| **Keyword Density**    | `urgency_word_count`, `credential_word_count`, `threat_word_count`, `reward_word_count`, `urgency_density`, `credential_density`, `threat_density`, `reward_density` | 8     |
+| **URL Indicators**     | `url_count`, `has_ip_url`                                                                                                                                            | 2     |
+| **Contact Info**       | `phone_number_count`, `email_address_count`                                                                                                                          | 2     |
+| **Structural**         | `has_greeting`, `has_generic_greeting`, `has_signature`, `has_click_instruction`                                                                                     | 4     |
+| **Information Theory** | `text_entropy`, `word_entropy`, `vocabulary_richness`                                                                                                                | 3     |
+| **Content Type**       | `is_sms`, `is_email`                                                                                                                                                 | 2     |
+
+**Keyword density** is calculated as:
+
+$$\text{density} = \frac{\text{keyword\_count}}{\text{total\_word\_count}}$$
+
+High urgency/credential/threat densities are strong phishing signals.
+
+---
+
+## Infrastructure Checks
+
+### SSL/TLS Certificate Validation
+
+**Class**: `SSLChecker`
+
+Performs real-time SSL/TLS certificate inspection by connecting to port 443.
+
+**What it checks**:
+
+- Whether the domain has an SSL certificate at all
+- Whether the certificate is valid (not expired, trusted CA)
+- Certificate issuer information
+- Days until certificate expiry
+
+**Scoring**:
+
+| Condition                     | SSL Score | Severity Generated |
+| ----------------------------- | --------- | ------------------ |
+| No SSL certificate            | 0.0       | High               |
+| Invalid/expired certificate   | 0.2       | Critical           |
+| Certificate expires < 30 days | 0.6       | Medium             |
+| Valid certificate             | 1.0       | —                  |
+
+```python
+# SSL check flow
+context = ssl.create_default_context()
+with socket.create_connection((domain, 443), timeout=5) as sock:
+    with context.wrap_socket(sock, server_hostname=domain) as ssock:
+        cert = ssock.getpeercert()
+        # Extract issuer, expiry, validity
+```
+
+---
+
+### Domain Age Analysis (WHOIS)
+
+**Class**: `DomainAgeChecker`
+
+Uses WHOIS lookup to determine how long a domain has been registered. Newly registered domains are a strong phishing indicator.
+
+**Scoring**:
+
+| Domain Age | Score | Interpretation                      |
+| ---------- | ----- | ----------------------------------- |
+| > 2 years  | 1.0   | Well-established, likely legitimate |
+| > 1 year   | 0.8   | Established                         |
+| > 6 months | 0.6   | Relatively new                      |
+| > 1 month  | 0.3   | Suspicious — recently registered    |
+| < 1 month  | 0.1   | Very suspicious — likely phishing   |
+
+**Generated threat indicators**:
+
+- Domain < 30 days old → **critical** severity
+- Domain < 180 days old → **high** severity
+
+> **Note**: Domain age checking requires the optional `python-whois` package. The system operates without it but provides richer analysis when available.
+
+---
+
+## Heuristic Detection Modules
+
+ThreatLens runs 11+ rule-based detection modules in parallel, each producing typed `ThreatIndicator` objects with category, description, severity (critical/high/medium/low), matched text, and confidence score.
 
 ### 1. Urgency Language Analysis
 
 **Function**: `check_urgency_advanced()`
 
-**What it detects**: Phishing messages almost always create a sense of urgency to prevent victims from thinking carefully.
+Detects urgency/pressure language designed to prevent victims from thinking carefully.
 
-**How it works**: Regex pattern matching against 20+ urgency phrases, categorized by severity.
+| Severity | Example Patterns                                                                          |
+| -------- | ----------------------------------------------------------------------------------------- |
+| Critical | "immediate action required", "account will be terminated", "unauthorized access detected" |
+| High     | "act now", "expires today", "within 24 hours", "urgent action"                            |
+| Medium   | "limited time", "don't miss", "hurry", "as soon as possible"                              |
 
-| Severity | Patterns Detected                                                        |
-| -------- | ------------------------------------------------------------------------ |
-| Critical | "immediate action required", "will be terminated", "permanently deleted" |
-| High     | "act now", "expires today", "within 24 hours", "urgent action"           |
-| Medium   | "limited time", "don't miss", "hurry", "as soon as possible"             |
-| Low      | "important notice", "reminder", "attention required"                     |
+**Also detects time-pressure patterns**:
 
-**Technical implementation**:
-
-```python
-URGENCY_PATTERNS = {
-    "critical": [
-        r"immediate\s+action\s+required",
-        r"your\s+account\s+will\s+be\s+(suspended|terminated|closed|deleted)",
-        r"unauthorized\s+(access|transaction|activity)\s+detected",
-        ...
-    ],
-    "high": [
-        r"act\s+now",
-        r"expires?\s+today",
-        r"within\s+\d+\s+hours?",
-        ...
-    ]
-}
-```
-
-Each pattern match produces a threat indicator with its severity level and a human-readable description.
+- Countdown timers: `\d+ hours? left|remaining`
+- Expiration: `expires? in \d+`
+- Deadlines: `deadline: \d+`
 
 ---
 
@@ -176,29 +380,15 @@ Each pattern match produces a threat indicator with its severity level and a hum
 
 **Function**: `check_credential_patterns()`
 
-**What it detects**: Requests for sensitive information like passwords, PINs, OTPs, and account numbers.
+Detects requests for sensitive data — the core goal of most phishing attacks.
 
-**Patterns detected** (mapped by severity):
+| Severity | Patterns                                                                  |
+| -------- | ------------------------------------------------------------------------- |
+| Critical | "enter your password/PIN/OTP", "confirm your identity", "social security" |
+| High     | "update your credentials", "reset your password", "verify your account"   |
+| Medium   | "confirm your details", "update your information", "verify your email"    |
 
-| Severity | Patterns                                                                            |
-| -------- | ----------------------------------------------------------------------------------- |
-| Critical | "enter your password", "confirm your PIN", "verify your identity", "enter your OTP" |
-| High     | "update your credentials", "reset your password", "verify your account"             |
-| Medium   | "confirm your details", "update your information", "verify your email"              |
-
-**How it works**: Regex matching against credential-related phrases. When detected, the specific sensitive data type (password, PIN, OTP, etc.) is extracted and included in the threat indicator.
-
-**Example detection**:
-
-```
-Input:  "Please enter your M-Pesa PIN to verify your account"
-Output: {
-  "category": "Credential Harvesting",
-  "description": "Requests sensitive data: 'pin'",
-  "severity": "critical",
-  "confidence": 0.95
-}
-```
+Confidence: 0.95 for critical, 0.85 for high/medium.
 
 ---
 
@@ -206,15 +396,13 @@ Output: {
 
 **Function**: `check_threat_patterns()`
 
-**What it detects**: Threats and consequences used to intimidate victims into compliance.
+Detects threatening language used to scare victims into acting.
 
-| Severity | Threats Detected                                                            |
-| -------- | --------------------------------------------------------------------------- |
-| Critical | "legal action will be taken", "reported to police", "arrested"              |
-| High     | "account will be locked", "services will be discontinued", "face penalties" |
-| Medium   | "may be affected", "could be compromised", "risk losing"                    |
-
-**Why this works**: Legitimate organizations rarely threaten legal action or arrest via email/SMS. Phishers use fear to override rational thinking.
+| Severity | Patterns                                                                                      |
+| -------- | --------------------------------------------------------------------------------------------- |
+| Critical | "account will be permanently closed", "legal action will be taken", "reported to authorities" |
+| High     | "will be suspended", "access will be revoked", "will be blocked"                              |
+| Medium   | "may be affected", "could be compromised", "review required"                                  |
 
 ---
 
@@ -222,45 +410,22 @@ Output: {
 
 **Function**: `analyze_url_advanced()`
 
-**What it detects**: Malicious, suspicious, or spoofed URLs embedded in messages.
+Performs deep structural analysis on every URL found in the content.
 
-**Analysis layers**:
+| Check                       | Severity | Description                                                       |
+| --------------------------- | -------- | ----------------------------------------------------------------- |
+| IP address as domain        | High     | URL uses raw IP instead of domain name                            |
+| URL shortener (14 tracked)  | Medium   | Shortened URL hides true destination (bit.ly, t.co, etc.)         |
+| Suspicious TLD (24 tracked) | High     | Domain uses risky TLD (.tk, .xyz, .zip, .top, etc.)               |
+| Homograph attack            | Critical | Lookalike characters replacing real ones                          |
+| Typosquatting               | Critical | Misspelled brand names in domain                                  |
+| Brand in subdomain          | High     | Legitimate brand name buried in subdomain                         |
+| Suspicious path keywords    | Medium   | `/login`, `/verify`, `/secure`, `/account`, `.exe`                |
+| High domain entropy         | Medium   | Randomly generated domain string (entropy > 3.5)                  |
+| Excessive subdomains        | Medium   | 3+ subdomain levels indicate obfuscation                          |
+| Domain spoofing             | Critical | Domain mimics legitimate site (checked against 30+ legit domains) |
 
-| Check                    | What It Finds                               | Severity |
-| ------------------------ | ------------------------------------------- | -------- |
-| **IP Address URLs**      | `http://192.168.1.1/login`                  | Critical |
-| **Suspicious TLDs**      | `.tk`, `.ml`, `.ga`, `.cf`, `.xyz`, `.buzz` | High     |
-| **URL Shorteners**       | `bit.ly`, `tinyurl.com`, `t.co`             | Medium   |
-| **Excessive Subdomains** | `login.secure.bank.evil.com`                | High     |
-| **Path Keywords**        | `/login`, `/verify`, `/secure`, `/update`   | Medium   |
-| **Encoded Characters**   | `%2F`, `%40` in URL path                    | Medium   |
-| **Long URLs**            | More than 75 characters                     | Low      |
-| **@ Symbol in URL**      | `http://bank.com@evil.com`                  | Critical |
-| **Homograph Attack**     | Cyrillic/lookalike characters               | Critical |
-| **Typosquatting**        | `safaricomm.com`, `equitybnk.com`           | High     |
-| **Domain Spoofing**      | Brand name as subdomain: `mpesa.evil.com`   | High     |
-| **Entropy Analysis**     | Randomly generated domain names             | Medium   |
-
-**Technical implementation**:
-
-```python
-# URL parsing
-parsed = urlparse(url)
-domain = parsed.netloc.lower()
-path = parsed.path.lower()
-
-# Check for IP-based URLs
-try:
-    ipaddress.ip_address(domain.split(':')[0])
-    indicators.append({"severity": "critical", ...})
-except ValueError:
-    pass
-
-# Check suspicious TLDs
-SUSPICIOUS_TLDS = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.buzz', ...]
-```
-
-**Whitelist**: Legitimate domains (google.com, microsoft.com, safaricom.co.ke, etc.) are whitelisted to prevent false positives.
+**Legitimate domain list** includes both **global** (google.com, paypal.com, apple.com, etc.) and **Kenya-specific** (mpesa.co.ke, safaricom.co.ke, kcbgroup.com, equitybank.co.ke, etc.).
 
 ---
 
@@ -268,32 +433,21 @@ SUSPICIOUS_TLDS = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.buzz', ...]
 
 **Function**: `detect_homograph_attack()`
 
-**What it detects**: Characters from non-Latin scripts (Cyrillic, Greek, etc.) that look identical to Latin letters but have different Unicode code points.
+Detects Unicode/lookalike character substitution attacks where visual similarity tricks users.
 
-**How it works**:
+**Homograph map** (subset):
 
-1. Iterates through each character in the domain name
-2. Uses `unicodedata.name()` to get the Unicode character name
-3. Checks if the character name contains "CYRILLIC", "GREEK", or other non-Latin script names
-4. Flags domains mixing scripts as potential homograph attacks
+| Fake Character | Real Character | Example Attack |
+| -------------- | -------------- | -------------- |
+| а (Cyrillic)   | a (Latin)      | pаypal.com     |
+| о (Cyrillic)   | o (Latin)      | gооgle.com     |
+| е (Cyrillic)   | e (Latin)      | applе.com      |
+| і (Cyrillic)   | i (Latin)      | mіcrosoft.com  |
+| ο (Greek)      | o (Latin)      | amazοn.com     |
+| 0 (zero)       | o              | g00gle.com     |
+| 1 (one)        | l              | app1e.com      |
 
-**Homograph mapping** (lookalike characters):
-
-```
-a → a  (Cyrillic а, U+0430)    e → e  (Cyrillic е, U+0435)
-o → o  (Cyrillic о, U+043E)    p → p  (Cyrillic р, U+0440)
-c → c  (Cyrillic с, U+0441)    x → x  (Cyrillic х, U+0445)
-y → y  (Cyrillic у, U+0443)    i → i  (Cyrillic і, U+0456)
-```
-
-**Example**:
-
-```
-Input:  "safaricom.co.ke" (with Cyrillic 'a' at position 1, U+0430)
-Output: CRITICAL — "Domain contains non-Latin characters (Cyrillic) — possible homograph attack"
-```
-
-**Why this matters**: An attacker can register a domain with Cyrillic characters that looks identical to `safaricom.co.ke` in most browsers.
+If any substitution is detected, a **critical** severity indicator is generated with the normalized domain.
 
 ---
 
@@ -301,34 +455,17 @@ Output: CRITICAL — "Domain contains non-Latin characters (Cyrillic) — possib
 
 **Function**: `detect_typosquatting()`
 
-**What it detects**: Domains that are intentionally misspelled versions of legitimate brands.
+Detects misspelled domain names targeting known brands using edit distance analysis.
 
-**Brands monitored**:
+**Detection methods**:
 
-```python
-BRAND_TARGETS = {
-    'safaricom': 'safaricom.co.ke',
-    'mpesa': 'safaricom.co.ke',
-    'equity': 'equitybank.co.ke',
-    'kcb': 'kcbgroup.com',
-    'cooperative': 'co-opbank.co.ke',
-    'paypal': 'paypal.com',
-    'google': 'google.com',
-    'microsoft': 'microsoft.com',
-    'apple': 'apple.com',
-    ...
-}
-```
+- **Missing character**: `gogle.com` → `google.com`
+- **Swapped characters**: `googel.com` → `google.com`
+- **Extra character**: `gooogle.com` → `google.com`
+- **Character substitution**: `g00gle.com` (0→o), `app1e.com` (1→l)
+- **Suspicious additions**: `google-secure.com`, `paypal-login.com`
 
-**Detection method**: String containment check — if a well-known brand name appears anywhere in the domain but the full domain doesn't match the legitimate one, it's flagged.
-
-**Examples**:
-
-```
-safaricom-verify.com  → Contains "safaricom", not safaricom.co.ke → FLAGGED
-equitybank-login.tk   → Contains "equity", not equitybank.co.ke → FLAGGED
-google.com            → Matches legitimate domain → NOT FLAGGED
-```
+**Brands monitored** (25+): google, facebook, apple, microsoft, amazon, paypal, netflix, safaricom, mpesa, equity, kcb, cooperative, and more.
 
 ---
 
@@ -336,64 +473,40 @@ google.com            → Matches legitimate domain → NOT FLAGGED
 
 **Function**: `check_kenya_targets()`
 
-**What it detects**: References to Kenyan financial services, telcos, and government agencies commonly impersonated in phishing.
+Detects references to Kenyan financial services and institutions commonly targeted by phishing.
 
-**Target categories**:
+| Category     | Keywords                                                               |
+| ------------ | ---------------------------------------------------------------------- |
+| M-Pesa       | mpesa, m-pesa, paybill, till number, lipa na mpesa, send money         |
+| Banks        | equity, kcb, cooperative, stanbic, absa, ncba, dtb, standard chartered |
+| Telcos       | safaricom, airtel, telkom, faiba                                       |
+| Government   | kra, nhif, nssf, ecitizen, huduma, tsc                                 |
+| Mobile Money | fuliza, mshwari, kcb mpesa, hustler fund                               |
 
-#### Mobile Money
-
-```python
-"m-pesa", "mpesa", "m pesa", "lipa na mpesa",
-"paybill", "till number", "send money",
-"fuliza", "m-shwari", "mshwari"
-```
-
-#### Banks
-
-```python
-"equity bank", "kcb bank", "co-operative bank",
-"co-op bank", "ncba", "stanbic", "absa",
-"family bank", "dtb", "i&m bank"
-```
-
-#### Telecommunications
-
-```python
-"safaricom", "airtel kenya", "telkom kenya",
-"faiba", "airtel money", "t-kash", "equitel"
-```
-
-#### Government
-
-```python
-"kra", "kenya revenue", "ntsa", "ecitizen",
-"e-citizen", "huduma", "nhif", "nssf"
-```
-
-**Why Kenya-specific rules matter**: Generic phishing detectors miss scams like:
-
-> "Dear Customer, your M-PESA account has been flagged for suspicious activity. Verify your PIN at http://mpesa-verify.tk to avoid suspension."
-
-This requires knowing that M-Pesa is a mobile money service and that Safaricom would never ask for PINs via SMS.
+**Severity escalation**: If a Kenya target keyword appears alongside credential harvesting patterns, severity is automatically escalated to **critical** (e.g., "Enter your M-Pesa PIN").
 
 ---
 
-### 8. SMS Scam Pattern Detection
+### 8. Suspicious Pattern Detection
 
-**Function**: `check_suspicious_patterns()` (SMS-specific branch)
+**Function**: `check_suspicious_patterns()`
 
-**What it detects**: Common SMS/smishing tactics unique to text messages.
+A comprehensive catch-all module covering 60+ regex patterns across multiple scam categories:
 
-| Pattern             | Example                                    | Severity |
-| ------------------- | ------------------------------------------ | -------- |
-| Prize/winning scams | "Congratulations! You won KES 500,000"     | High     |
-| Callback traps      | "Call 0900-XXX-XXX to claim"               | High     |
-| Reply traps         | "Reply YES to confirm"                     | Medium   |
-| Short code spoofing | Messages pretending to be from short codes | Medium   |
-| Excessive caps      | "URGENT!!! YOUR ACCOUNT..."                | Medium   |
-| Number replacement  | "Call +254-7XX-XXX-XXX"                    | Low      |
-
-**SMS-specific context**: SMS messages are shorter and have different attack patterns than emails. PhishGuard adjusts its detection threshold and pattern weight for SMS content.
+| Category                   | Patterns | Description                                                       |
+| -------------------------- | -------- | ----------------------------------------------------------------- |
+| **Suspicious CTA**         | 13       | "click here", "tap now", "login immediately", "download attached" |
+| **Impersonation**          | 5        | "from the security team", "automated alert detected"              |
+| **Invoice Scam**           | 5        | "attached invoice", "outstanding payment", "payment due"          |
+| **Subscription Scam**      | 4        | "subscription expired", "auto-renewal failed"                     |
+| **Fake Device Alert**      | 4        | "new device login", "if this wasn't you"                          |
+| **Delivery Scam**          | 3        | "package delayed", "delivery fee required"                        |
+| **Tax/Refund Scam**        | 4        | "tax refund approved", "KRA has determined"                       |
+| **Reward/Investment Scam** | 12       | "guaranteed returns", "earn $X per day", "you've won"             |
+| **Financial Request**      | 7        | "transfer KSH", "wire transfer", "bitcoin wallet"                 |
+| **Grammar Red Flags**      | 3        | "do the needful", "kindly", formal notification phrasing          |
+| **SMS-specific**           | 6        | "reply with your PIN", "free M-Pesa money"                        |
+| **Email-specific**         | 5        | "confidential message", "failure to comply"                       |
 
 ---
 
@@ -401,59 +514,26 @@ This requires knowing that M-Pesa is a mobile money service and that Safaricom w
 
 **Function**: `check_link_text_mismatch()`
 
-**What it detects**: HTML links where the displayed text shows one URL but the actual `href` points somewhere else.
+Detects deceptive links where the visible text shows one URL but the actual hyperlink points to a different domain.
 
-**How it works**:
-
-```python
-# Regex to find HTML links with URL-like display text
-pattern = r'<a[^>]*href=["\']([^"\']+)["\'][^>]*>([^<]*)</a>'
-
-# Check if display text looks like a URL
-if display_text starts with "http" or contains ".com", ".co.ke", etc.:
-    # Compare display domain vs actual href domain
-    if domains don't match:
-        → CRITICAL indicator
+```
+Visible: [www.safaricom.co.ke](http://phishing-scam.xyz/steal)
+Result:  CRITICAL — displayed URL differs from actual destination
 ```
 
-**Example**:
-
-```html
-<a href="http://evil-site.tk/steal">http://equitybank.co.ke</a>
-```
-
-The user sees `http://equitybank.co.ke` but clicking sends them to `evil-site.tk`.
-
-**Detection output**:
-
-```json
-{
-  "category": "Link Mismatch",
-  "description": "Display URL domain differs from actual link destination",
-  "severity": "critical",
-  "confidence": 0.95
-}
-```
+Confidence: 0.95. This is one of the most reliable phishing indicators.
 
 ---
 
 ### 10. Financial Request Detection
 
-**Function**: `check_suspicious_patterns()` (financial branch)
+Detected as part of `check_suspicious_patterns()`, this covers:
 
-**What it detects**: Requests to send money, pay fees, or make financial transactions.
-
-**Patterns**:
-
-```python
-r"send\s+(?:money|cash|funds|payment)",
-r"(?:transfer|wire|remit)\s+(?:to|into)",
-r"(?:pay|deposit)\s+(?:a\s+)?(?:fee|charge|fine)",
-r"(?:processing|activation|clearance)\s+fee",
-r"(?:western\s+union|money\s*gram|bitcoin|crypto)"
-```
-
-**Why this matters**: Advance-fee fraud ("pay a small fee to claim your prize") is one of the most common scam types in Kenya.
+- Money transfer requests (KSH, USD, $ amounts)
+- Fee advance scams ("pay a small processing fee")
+- Credit card information requests
+- Wire transfer instructions
+- Cryptocurrency wallet scams (Bitcoin, ETH, USDT)
 
 ---
 
@@ -461,355 +541,258 @@ r"(?:western\s+union|money\s*gram|bitcoin|crypto)"
 
 **Function**: `calculate_entropy()`
 
-**What it detects**: Domain names that appear randomly generated (used in disposable phishing infrastructure).
+Measures the randomness of strings using information theory.
 
-**How it works**:
+$$H(X) = -\sum_{i=1}^{n} p(x_i) \log_2 p(x_i)$$
 
-Shannon entropy measures the randomness/unpredictability of a string:
+| Entropy Value | Interpretation                               |
+| ------------- | -------------------------------------------- |
+| < 2.5         | Low randomness — likely real words           |
+| 2.5 – 3.5     | Normal — typical domain names                |
+| > 3.5         | High randomness — likely generated/malicious |
 
-$$H = -\sum_{i=1}^{n} p(x_i) \cdot \log_2(p(x_i))$$
-
-Where:
-
-- $H$ = entropy (bits per character)
-- $p(x_i)$ = probability of character $x_i$ (frequency / total length)
-- $n$ = number of unique characters
-
-**Implementation**:
-
-```python
-from math import log2
-from collections import Counter
-
-def calculate_entropy(text):
-    if not text:
-        return 0
-    counter = Counter(text)
-    length = len(text)
-    entropy = -sum(
-        (count / length) * log2(count / length)
-        for count in counter.values()
-    )
-    return entropy
-```
-
-**Interpretation**:
-
-| Entropy   | Meaning                   | Example Domain    |
-| --------- | ------------------------- | ----------------- |
-| < 2.5     | Very structured / short   | `aaa.com`         |
-| 2.5 - 3.5 | Normal domain             | `safaricom.co.ke` |
-| 3.5 - 4.0 | Somewhat random           | `xk9mz2.com`      |
-| > 4.0     | Likely randomly generated | `a8x7k2m9q.xyz`   |
-
-Domains with entropy > 4.0 are flagged as potentially malicious (disposable phishing domains).
+Applied to: domain names, URL paths, full URLs, email/SMS text content, and per-word entropy.
 
 ---
 
-### 12. Suspicious Pattern Detection
+## Ensemble Scoring Algorithm
 
-**Function**: `check_suspicious_patterns()`
+ThreatLens v3.0 uses an intelligent ensemble that combines the ML classifier probability with the heuristic threat indicator score.
 
-**What it detects**: General phishing indicators that span all content types.
-
-| Pattern                | Severity | Example                            |
-| ---------------------- | -------- | ---------------------------------- |
-| Grammar/spelling clues | Low      | "Dear Costumer" (misspelling)      |
-| Generic greetings      | Low      | "Dear Customer" (no personal name) |
-| Data: URI schemes      | High     | Embedded data URIs for obfuscation |
-| Excessive exclamation  | Low      | "ACT NOW!!!"                       |
-| Multiple redirects     | Medium   | URL with redirect chains           |
-| Base64 content         | High     | Encoded payloads in messages       |
-
----
-
-## Risk Scoring Algorithm
-
-### Severity Weight System
-
-Each detection module produces indicators with severity levels. The risk score is calculated using weighted combination:
-
-```python
-SEVERITY_WEIGHTS = {
-    "critical": 0.35,   # 35% contribution per critical indicator
-    "high":     0.25,   # 25% per high indicator
-    "medium":   0.15,   # 15% per medium indicator
-    "low":      0.08    # 8% per low indicator
-}
-```
-
-### Score Calculation
-
-```python
-def calculate_risk_score(indicators):
-    if not indicators:
-        return 0.0
-
-    total_score = 0.0
-    for indicator in indicators:
-        severity = indicator.get("severity", "medium")
-        confidence = indicator.get("confidence", 0.7)
-        weight = SEVERITY_WEIGHTS.get(severity, 0.15)
-
-        # Weight x Confidence = contribution
-        total_score += weight * confidence
-
-    # Normalize to 0.0 - 1.0 range
-    max_possible = len(indicators) * 0.35  # if all were critical
-    normalized = min(total_score / max(max_possible, 1), 1.0)
-
-    # Apply content-type adjustment
-    if content_type == "sms":
-        normalized *= 1.1   # SMS scams are more dangerous (direct action)
-    elif content_type == "url":
-        normalized *= 1.05  # URLs can lead directly to credential theft
-
-    return min(normalized, 1.0)
-```
-
-### Score Breakdown Example
+### Score Fusion Logic
 
 ```
-Input: "Your M-PESA account suspended! Click http://mpesa-login.tk to verify PIN"
+Let:
+  H = heuristic_score (from weighted threat indicators)
+  M = ml_phishing_probability (from Random Forest or Gradient Boosting)
+  I = total threat indicators found
+  C = critical indicator count
+  S = serious indicators (critical + high)
 
-Indicators found:
-  1. Urgency ("account suspended")     → critical x 0.95 = 0.3325
-  2. Kenya Target ("M-PESA")           → high     x 0.85 = 0.2125
-  3. Credential Harvesting ("PIN")     → critical x 0.95 = 0.3325
-  4. Suspicious TLD (.tk)              → high     x 0.85 = 0.2125
-  5. Typosquatting ("mpesa-login")      → high     x 0.80 = 0.2000
+Fusion rules:
+  IF I == 0:
+    combined = M × 0.3          # No heuristic evidence → dampen ML
+  ELIF S == 0 AND medium <= 1:
+    combined = 0.7H + 0.3M      # Weak signals → trust heuristic more
+  ELSE:
+    combined = max(max(H, M), 0.55H + 0.45M)  # Real threats → use maximum
 
-Total raw score: 1.2900
-Max possible (5 x 0.35): 1.75
-Normalized: 1.29 / 1.75 = 0.737
-SMS adjustment: 0.737 x 1.1 = 0.811
-
-Final confidence: 0.81 → PHISHING (Critical)
+Safety floors:
+  IF S >= 3 OR C >= 2: combined >= 0.85
+  IF S >= 2 OR C >= 1: combined >= 0.65
+  IF high >= 1 AND medium >= 2: combined >= 0.55
+  IF S >= 1 AND medium >= 1: combined >= 0.45
+  IF medium >= 3: combined >= 0.40
 ```
+
+**Design rationale**:
+
+- When ML finds phishing but heuristics find nothing, the ML score is dampened (×0.3) to prevent false positives on stylistically unusual but legitimate content
+- When heuristics find real threats, the maximum of ML and heuristic scores is used to ensure nothing is missed
+- Safety floor rules guarantee that multiple serious indicators always produce a high combined score
+
+### Heuristic Score Calculation
+
+Each threat indicator contributes to the heuristic score based on severity and confidence:
+
+| Severity | Weight |
+| -------- | ------ |
+| Critical | 0.45   |
+| High     | 0.30   |
+| Medium   | 0.18   |
+| Low      | 0.08   |
+
+**Score formula**: $\text{score} = \sum (\text{weight}_i \times \text{confidence}_i)$
+
+**Boosting rules** (common phishing combinations):
+| Combination | Boost |
+| -------------------------------- | ------ |
+| Critical + Credential harvesting | ×1.5 |
+| Credential + Urgency | ×1.4 |
+| Threat + Credential | ×1.4 |
+| Credential + URL issue | ×1.3 |
+| Urgency + URL issue | ×1.3 |
 
 ---
 
 ## Classification System
 
-| Classification | Confidence Range | Risk Level    | Color  |
-| -------------- | ---------------- | ------------- | ------ |
-| Safe           | 0% - 24%         | Low           | Green  |
-| Suspicious     | 25% - 49%        | Medium        | Yellow |
-| Phishing       | 50%+             | High/Critical | Red    |
+### Thresholds
 
-### Risk Level Assignment
+| Combined Score | Classification | Risk Level |
+| -------------- | -------------- | ---------- |
+| ≥ 0.70         | **phishing**   | Critical   |
+| 0.40 – 0.69    | **phishing**   | High       |
+| 0.20 – 0.39    | **suspicious** | Medium     |
+| < 0.20         | **safe**       | Low        |
 
-```python
-if confidence >= 0.7:
-    risk_level = "critical"
-elif confidence >= 0.5:
-    risk_level = "high"
-elif confidence >= 0.25:
-    risk_level = "medium"
-else:
-    risk_level = "low"
-```
+### Indicator Deduplication
+
+Before scoring, indicators are deduplicated by `(category, matched_text)` tuple and sorted by severity (critical first) then by confidence (highest first). Maximum 15 indicators are returned to the frontend.
 
 ---
 
 ## Explainable AI Output
 
-PhishGuard provides **explainable results** — every classification comes with a detailed explanation of _why_ the content was flagged.
+Every analysis returns a structured, human-readable report:
 
-### Explanation Generation
+### Threat Indicators
 
-**Function**: `generate_explanation()`
+Each indicator includes:
 
-The explanation includes:
-
-1. **Classification verdict** with emoji indicator
-2. **Number of threat indicators** found
-3. **Content type context** (email/SMS/URL)
-4. **Grouped indicators by category** with severity labels
-5. **Overall risk assessment**
-
-**Example output**:
-
-```
-PHISHING DETECTED: This sms shows 5 threat indicators.
-
-CRITICAL: Credential Harvesting — Requests sensitive data: 'pin'
-CRITICAL: Urgency — Creates pressure: 'your account will be suspended'
-HIGH: Kenya Target — References Kenyan financial service: 'M-Pesa'
-HIGH: Suspicious TLD — Domain uses suspicious TLD: .tk
-MEDIUM: Domain Spoofing — Brand name used in suspicious domain
-
-Overall Risk Level: CRITICAL — This content shows strong signs of being a phishing attempt.
+```json
+{
+  "category": "Credential Harvesting",
+  "description": "Requests sensitive data: 'enter your pin'",
+  "severity": "critical",
+  "matched_text": "enter your pin",
+  "confidence": 0.95
+}
 ```
 
-### Recommendation Generation
+### ML Feature Transparency
 
-**Function**: `generate_recommendations()`
+The response includes an `ml_features` object exposing:
 
-Contextual recommendations based on the specific threats found:
+| Field                     | Description                                        |
+| ------------------------- | -------------------------------------------------- |
+| `lexical_features`        | All 35 URL features extracted (for URL scans)      |
+| `text_features`           | All 30+ text features extracted (for email/SMS)    |
+| `ssl_status`              | SSL certificate details (validity, issuer, expiry) |
+| `domain_age`              | WHOIS registration age and score                   |
+| `ml_phishing_probability` | Raw ML model output (0.0–1.0)                      |
+| `top_ml_features`         | Top 5 features driving the ML prediction           |
+| `model_used`              | "RandomForest" (URL) or "GradientBoosting" (text)  |
 
-| Threat Category       | Recommendation                                            |
-| --------------------- | --------------------------------------------------------- |
-| Credential Harvesting | "NEVER enter passwords, PINs, or OTPs via links"          |
-| Kenya Target          | "Contact Safaricom (100) or your bank directly to verify" |
-| Suspicious URL        | "DO NOT click any links in this message"                  |
-| Financial Request     | "Legitimate companies never ask for fees via SMS/email"   |
-| General Phishing      | "Report this to your email provider as phishing"          |
+### Analysis Details
+
+```json
+{
+  "urls_found": 2,
+  "total_indicators": 7,
+  "severity_breakdown": { "critical": 2, "high": 3, "medium": 1, "low": 1 },
+  "heuristic_score": 0.82,
+  "ml_score": 0.91,
+  "combined_score": 0.91,
+  "model_type": "GradientBoosting",
+  "features_extracted": 35,
+  "analysis_version": "3.0"
+}
+```
+
+### Contextual Recommendations
+
+Recommendations are generated based on classification and detected categories:
+
+- **Phishing**: "DO NOT click links", "Delete immediately", "Contact Safaricom (100)", "Report to bank fraud desk"
+- **Suspicious**: "Verify through official channels", "Check sender carefully", "Take your time"
+- **Safe**: General hygiene tips — verify senders, don't share PINs, use official apps
 
 ---
 
 ## Security Layer
 
-The detection engine is protected by multiple security layers:
+### Input Protection
 
-### Rate Limiting
+| Layer                | Implementation                                            |
+| -------------------- | --------------------------------------------------------- |
+| Input sanitization   | Null byte removal, HTML tag stripping, length enforcement |
+| URL validation       | Scheme validation, length limits                          |
+| Pydantic validators  | Type checking, enum validation, content sanitization      |
+| Content length limit | Configurable `MAX_CONTENT_LENGTH` (default: 10,000 chars) |
 
-```python
-# 30 requests per minute per IP address
-@app.middleware("http")
-async def rate_limiter(request, call_next):
-    client_ip = request.client.host
-    now = time.time()
-    window = rate_limit_store.get(client_ip, [])
-    window = [t for t in window if now - t < 60]
-    if len(window) >= RATE_LIMIT:
-        return JSONResponse(status_code=429, content={"error": "Rate limit exceeded"})
-    window.append(now)
-    rate_limit_store[client_ip] = window
-```
+### API Protection
 
-### Input Sanitization
+| Layer            | Implementation                                                    |
+| ---------------- | ----------------------------------------------------------------- |
+| CORS             | Environment-based (`FRONTEND_URL`, `ALLOWED_ORIGINS`)             |
+| Trusted hosts    | `ALLOWED_HOSTS` whitelist                                         |
+| Rate limiting    | 30 requests/minute per IP with `X-RateLimit-*` headers            |
+| Security headers | CSP, X-Frame-Options: DENY, X-Content-Type-Options: nosniff, HSTS |
 
-```python
-def sanitize_input(text: str) -> str:
-    text = text.replace('\x00', '')        # Remove null bytes
-    text = re.sub(r'[\x01-\x08\x0b\x0c\x0e-\x1f]', '', text)  # Control chars
-    text = text[:50000]                     # 50KB max
-    return text.strip()
-```
+### Frontend Security
 
-### Pydantic Validation
-
-```python
-class AnalysisRequest(BaseModel):
-    content: str = Field(..., min_length=1, max_length=50000)
-    content_type: str = Field(default="email")
-
-    @validator('content_type')
-    def validate_content_type(cls, v):
-        allowed = ['email', 'sms', 'url']
-        if v.lower() not in allowed:
-            raise ValueError(f'Must be one of: {allowed}')
-        return v.lower()
-```
+| Layer            | Implementation                                                   |
+| ---------------- | ---------------------------------------------------------------- |
+| `security.js`    | XSS sanitization, client-side rate limiting, secure localStorage |
+| `scanStorage.js` | Validated JSON storage with CustomEvent real-time sync           |
 
 ---
 
 ## Real-World Examples
 
-### Example 1: M-Pesa PIN Scam (SMS)
+### Example 1: Kenya M-Pesa Phishing SMS
 
 **Input**:
 
 ```
-Dear Customer, your M-PESA account has been flagged for suspicious activity.
-Verify your PIN at http://mpesa-verify.tk to avoid suspension.
-Safaricom Customer Care
+MPESA: Your account has been suspended due to unusual activity.
+Verify your PIN at http://mpesa-verify.tk/login to restore access.
+Act within 2 hours or your funds will be frozen.
 ```
 
-**Detection Results**:
+**Detection results**:
 
-| #   | Category              | Severity | Confidence |
-| --- | --------------------- | -------- | ---------- |
-| 1   | Credential Harvesting | Critical | 95%        |
-| 2   | Urgency               | Critical | 95%        |
-| 3   | Kenya Target (M-Pesa) | High     | 85%        |
-| 4   | Suspicious TLD (.tk)  | High     | 85%        |
-| 5   | Typosquatting         | High     | 80%        |
-| 6   | Threat (suspension)   | High     | 85%        |
-
-**Classification**: PHISHING — Confidence: 89% — Risk: CRITICAL
+| Module                 | Finding                                    | Severity |
+| ---------------------- | ------------------------------------------ | -------- |
+| Kenya Target Detection | References 'mpesa' with credential request | Critical |
+| Credential Harvesting  | Requests PIN                               | Critical |
+| Suspicious TLD         | Domain uses .tk TLD                        | High     |
+| Urgency Analysis       | "act within 2 hours"                       | High     |
+| Threatening Language   | "funds will be frozen"                     | High     |
+| URL Path Analysis      | Contains /login path                       | Medium   |
+| ML Text Classifier     | Probability: 0.94                          | —        |
+| **Combined Score**     | **0.97**                                   | Critical |
 
 ---
 
-### Example 2: KRA Tax Refund Scam (Email)
+### Example 2: Email Invoice Scam
 
 **Input**:
 
-```html
-Subject: KRA Tax Refund Notification Dear Taxpayer, You have an unclaimed tax
-refund of KES 45,000. To process your refund, click the link below and enter
-your KRA PIN and bank details:
+```
+Dear Valued Customer,
 
-<a href="http://kra-refund.xyz/claim">https://www.kra.go.ke/refund</a>
+We have detected unauthorized access to your account.
+Please click here to verify your identity immediately.
+Failure to comply within 24 hours will result in account suspension.
 
-This refund expires in 24 hours. Failure to claim will result in forfeiture.
-Kenya Revenue Authority
+Download the attached invoice for your records.
 ```
 
-**Detection Results**:
+**Detection results**:
 
-| #   | Category              | Severity | Confidence |
-| --- | --------------------- | -------- | ---------- |
-| 1   | Link Mismatch         | Critical | 95%        |
-| 2   | Credential Harvesting | Critical | 95%        |
-| 3   | Kenya Target (KRA)    | High     | 85%        |
-| 4   | Urgency (24 hours)    | High     | 90%        |
-| 5   | Suspicious TLD (.xyz) | High     | 85%        |
-| 6   | Financial Request     | Medium   | 75%        |
-
-**Classification**: PHISHING — Confidence: 92% — Risk: CRITICAL
+| Module                | Finding                               | Severity |
+| --------------------- | ------------------------------------- | -------- |
+| Impersonation         | "We have detected unauthorized" alert | Critical |
+| Credential Harvesting | "verify your identity"                | Critical |
+| Suspicious CTA        | "click here" instruction              | High     |
+| Threatening Language  | "account suspension"                  | High     |
+| Urgency Analysis      | "within 24 hours"                     | High     |
+| Invoice Scam          | "attached invoice"                    | High     |
+| Generic Greeting      | "Dear Valued Customer"                | Low      |
+| ML Text Classifier    | Probability: 0.89                     | —        |
+| **Combined Score**    | **0.93**                              | Critical |
 
 ---
 
-### Example 3: Legitimate Bank Email
+### Example 3: Legitimate Bank Notification
 
 **Input**:
 
 ```
-Dear John,
-
-Your November statement is now available for download on the Equity Bank
-mobile app or internet banking portal at https://equityonline.equitybank.co.ke
-
-Thank you for banking with us.
-
-Equity Bank Customer Service
+Hi John, your KCB account statement for May 2025 is ready.
+View it on the KCB app or at www.kcbgroup.com.
 ```
 
-**Detection Results**:
+**Detection results**:
 
-| #   | Category     | Severity | Confidence |
-| --- | ------------ | -------- | ---------- |
-| 1   | Kenya Target | High     | 85%        |
-
-**Classification**: SAFE — Confidence: 12% — Risk: LOW
-
-_Note_: The Kenya target indicator alone is not sufficient to classify as phishing. The absence of urgency, credential requests, suspicious URLs, and threats keeps the score low.
-
----
-
-### Example 4: Prize Scam SMS
-
-**Input**:
-
-```
-CONGRATULATIONS!!! You have won KES 1,000,000 in the Safaricom anniversary
-promotion! Call 0900-123-456 to claim. Send activation fee of KES 500 to
-Paybill 123456.
-```
-
-**Detection Results**:
-
-| #   | Category          | Severity | Confidence |
-| --- | ----------------- | -------- | ---------- |
-| 1   | SMS Prize Scam    | High     | 85%        |
-| 2   | Financial Request | High     | 85%        |
-| 3   | SMS Callback Trap | High     | 85%        |
-| 4   | Kenya Target      | High     | 85%        |
-| 5   | Excessive Caps    | Medium   | 70%        |
-
-**Classification**: PHISHING — Confidence: 82% — Risk: CRITICAL
+| Module                 | Finding                                  | Severity |
+| ---------------------- | ---------------------------------------- | -------- |
+| Kenya Target Detection | References 'kcb' (no credential request) | Medium   |
+| ML Text Classifier     | Probability: 0.08                        | —        |
+| **Combined Score**     | **0.06**                                 | Low      |
+| **Classification**     | **safe**                                 | ✅       |
 
 ---
 
@@ -817,39 +800,26 @@ Paybill 123456.
 
 ### Current Limitations
 
-| Limitation                    | Description                                       |
-| ----------------------------- | ------------------------------------------------- |
-| **Heuristic-based only**      | No trained ML model — relies on pattern rules     |
-| **English-focused**           | Limited Swahili/Sheng language detection          |
-| **No image analysis**         | Cannot detect phishing in image-based emails      |
-| **No real-time threat feeds** | Doesn't query live malware/phishing URL databases |
-| **Static pattern list**       | New attack patterns require manual rule updates   |
-| **No sender verification**    | Cannot check SPF/DKIM/DMARC email authentication  |
+- **Static model training** — Models train once at startup; no online learning from user feedback
+- **WHOIS dependency** — Domain age checking requires optional `python-whois` package
+- **SSL check latency** — Real-time SSL connections add ~2–5 seconds for URL scans
+- **Dataset size** — URL dataset (208 records) is small; SMS dataset (5,574) is moderate
+- **No image analysis** — Cannot detect phishing in screenshots or image-based emails
+- **Single language** — Pattern matching primarily targets English content
+- **No header analysis** — Email headers (SPF, DKIM, DMARC) are not inspected
 
-### Future Enhancements
+### Future Improvements
 
-| Enhancement                    | Impact                                           |
-| ------------------------------ | ------------------------------------------------ |
-| **Trained ML classifier**      | TF-IDF + Random Forest or BERT-based model       |
-| **Swahili NLP**                | Detect Swahili/Sheng phishing messages           |
-| **VirusTotal API integration** | Real-time URL reputation checking                |
-| **Image OCR analysis**         | Detect phishing text in screenshots/images       |
-| **Browser extension**          | Real-time URL checking during browsing           |
-| **Email header analysis**      | SPF/DKIM/DMARC verification                      |
-| **Kenyan phishing dataset**    | Crowd-sourced dataset of local phishing examples |
-| **Collaborative reporting**    | Community-driven threat intelligence             |
+- **Deep learning models** — BERT/transformer-based classifiers for semantic understanding
+- **Larger training datasets** — Expand URL dataset to 50,000+ labeled samples
+- **Online learning** — Incorporate user feedback to improve models over time
+- **Swahili/Sheng support** — Detect phishing in Kenyan vernacular languages
+- **Image OCR** — Extract and analyze text from screenshot-based phishing
+- **Email header analysis** — SPF/DKIM/DMARC validation for email authenticity
+- **Real-time threat feeds** — Integration with PhishTank, VirusTotal, Google Safe Browsing
+- **Browser extension** — Real-time URL scanning while browsing
 
 ---
 
-## Summary
-
-PhishGuard's detection engine combines **12 specialized detection modules** with a **weighted risk scoring algorithm** to produce accurate, explainable phishing classifications. The system is specifically tuned for the **Kenyan cybersecurity landscape**, covering M-Pesa scams, local bank phishing, and government impersonation — threats that generic (western-focused) phishing detectors often miss.
-
-The heuristic approach provides **instant detection with zero training data**, **full explainability**, and **easy extensibility** — making it ideal for a hackathon project that can be immediately demonstrated and deployed.
-
----
-
-<p align="center">
-  <strong>PhishGuard Detection Engine v2.0</strong><br>
-  Built for Hackathon 2026
-</p>
+_ThreatLens v3.0 — Hybrid ML + Heuristic Phishing Detection Engine_
+_Built for the Kenyan threat landscape_

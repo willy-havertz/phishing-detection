@@ -1,11 +1,11 @@
-# 🛡️ PhishGuard - AI Phishing Detection Platform
+# 🛡️ ThreaLens - AI Phishing Detection Platform
 
 <p align="center">
-  <img src="frontend/public/shield.svg" width="100" alt="PhishGuard Logo">
+  <img src="frontend/public/shield.svg" width="100" alt="ThreaLens Logo">
 </p>
 
 <p align="center">
-  <strong>AI-Powered Phishing Detection for Kenya 🇰🇪</strong><br>
+  <strong>AI-Powered Phishing Detection</strong><br>
   Protect yourself from email phishing, SMS smishing, and malicious URL attacks
 </p>
 
@@ -25,7 +25,7 @@ According to the Communications Authority of Kenya, phishing attacks increased b
 
 ## 💡 Our Solution
 
-PhishGuard is an AI-powered web platform that analyzes emails, SMS messages, and URLs to detect phishing and smishing attempts in real-time using advanced heuristic analysis and pattern matching.
+ThreaLens is an AI-powered web platform that analyzes emails, SMS messages, and URLs to detect phishing and smishing attempts in real-time using advanced heuristic analysis and pattern matching.
 
 ### Key Features
 
@@ -41,15 +41,17 @@ PhishGuard is an AI-powered web platform that analyzes emails, SMS messages, and
 
 ## 🛠️ Tech Stack
 
-| Component      | Technology               | Purpose                          |
-| -------------- | ------------------------ | -------------------------------- |
-| **Frontend**   | React 18 + Vite          | Single-page application          |
-| **Charts**     | Recharts                 | Dashboard data visualization     |
-| **Routing**    | React Router v6          | Client-side page routing         |
-| **ML Service** | Python 3.9+ + FastAPI    | Phishing detection engine        |
-| **Validation** | Pydantic                 | Request/response data validation |
-| **Storage**    | Browser localStorage     | Client-side scan history         |
-| **Security**   | CSP, CORS, Rate Limiting | Application hardening            |
+| Component      | Technology                         | Purpose                                 |
+| -------------- | ---------------------------------- | --------------------------------------- |
+| **Frontend**   | React 18 + Vite                    | Single-page application                 |
+| **Charts**     | Recharts                           | Dashboard data visualization            |
+| **Routing**    | React Router v6                    | Client-side page routing                |
+| **ML Service** | Python 3.9+ + FastAPI              | Phishing detection engine               |
+| **ML Models**  | scikit-learn, NumPy                | Random Forest & Naive Bayes classifiers |
+| **Datasets**   | SMS Spam Collection, Phishing URLs | Real-world training data                |
+| **Validation** | Pydantic                           | Request/response data validation        |
+| **Storage**    | Browser localStorage               | Client-side scan history                |
+| **Security**   | CSP, CORS, Rate Limiting           | Application hardening                   |
 
 ### Architecture
 
@@ -79,7 +81,13 @@ PhishGuard is an AI-powered web platform that analyzes emails, SMS messages, and
 │  │  • Security Headers                │  │
 │  └────────────────────────────────────┘  │
 │  ┌────────────────────────────────────┐  │
-│  │  Detection Engine (10+ modules)    │  │
+│  │  Trained ML Models                 │  │
+│  │  • Random Forest (URL classifier)  │  │
+│  │  • TF-IDF + Naive Bayes (text)     │  │
+│  │  • Trained on real datasets        │  │
+│  └────────────────────────────────────┘  │
+│  ┌────────────────────────────────────┐  │
+│  │  Heuristic Detection (10+ modules) │  │
 │  │  • Urgency Analysis                │  │
 │  │  • Credential Harvesting Detection │  │
 │  │  • URL Analysis (Advanced)         │  │
@@ -93,7 +101,7 @@ PhishGuard is an AI-powered web platform that analyzes emails, SMS messages, and
 │  └────────────────────────────────────┘  │
 │  ┌────────────────────────────────────┐  │
 │  │  Risk Scoring & Classification     │  │
-│  │  • Weighted multi-severity scoring │  │
+│  │  • Hybrid ML + heuristic scoring   │  │
 │  │  • Explainable AI output           │  │
 │  │  • Context-aware recommendations   │  │
 │  └────────────────────────────────────┘  │
@@ -112,8 +120,8 @@ PhishGuard is an AI-powered web platform that analyzes emails, SMS messages, and
 ### 1. Clone & Setup
 
 ```bash
-git clone <repo-url>
-cd Hackathon-pr
+git clone https://github.com/willy-havertz/phishing-detection.git
+cd phishing-detection
 ```
 
 ### 2. Install Dependencies
@@ -163,19 +171,18 @@ Set environment variable:
 VITE_API_URL=https://your-backend-url.com
 ```
 
-### Backend (Render / Railway / Fly.io)
+---
 
-Set environment variables:
+## Datasets
 
-```bash
-PRODUCTION=true
-FRONTEND_URL=https://your-frontend.vercel.app
-ALLOWED_HOSTS=your-backend.onrender.com
-RATE_LIMIT=30
-```
+The ML models are trained on real-world datasets included in `backend-ml/datasets/`:
 
-See `.env.example` files in each directory for all configuration options.
+| Dataset             | Records | Source                       | Used For                               |
+| ------------------- | ------- | ---------------------------- | -------------------------------------- |
+| `sms_spam.csv`      | 5,574   | UCI SMS Spam Collection      | Text classifier (TF-IDF + Naive Bayes) |
+| `phishing_urls.csv` | 208+    | Curated phishing URL samples | URL classifier (Random Forest)         |
 
+Models are trained automatically at startup. If datasets are missing, the system falls back to synthetic data.
 
 ---
 
@@ -200,20 +207,22 @@ See `.env.example` files in each directory for all configuration options.
 
 ### Detection Modules
 
-| Module                  | What It Detects                          |
-| ----------------------- | ---------------------------------------- |
-| Urgency Analysis        | Pressure language ("act now", "expires") |
-| Credential Harvesting   | PIN/password/OTP requests                |
-| Threat Detection        | Account suspension/legal threats         |
-| Advanced URL Analysis   | Suspicious domains, IPs, TLDs            |
-| Homograph Detection     | Lookalike character attacks (Cyrillic)   |
-| Typosquatting Detection | Misspelled brand domains                 |
-| Domain Spoofing         | Brand name in subdomain abuse            |
-| Kenya Target Detection  | M-Pesa, banks, government impersonation  |
-| SMS Scam Patterns       | Prize scams, callback traps, reply scams |
-| Financial Request       | Money transfer/fee payment requests      |
-| Link Mismatch           | Display URL ≠ actual destination         |
-| Entropy Analysis        | Randomly generated domain detection      |
+| Module                  | What It Detects                                  |
+| ----------------------- | ------------------------------------------------ |
+| **ML: URL Classifier**  | Random Forest trained on phishing URL dataset    |
+| **ML: Text Classifier** | TF-IDF + Naive Bayes trained on SMS spam dataset |
+| Urgency Analysis        | Pressure language ("act now", "expires")         |
+| Credential Harvesting   | PIN/password/OTP requests                        |
+| Threat Detection        | Account suspension/legal threats                 |
+| Advanced URL Analysis   | Suspicious domains, IPs, TLDs                    |
+| Homograph Detection     | Lookalike character attacks (Cyrillic)           |
+| Typosquatting Detection | Misspelled brand domains                         |
+| Domain Spoofing         | Brand name in subdomain abuse                    |
+| Kenya Target Detection  | M-Pesa, banks, government impersonation          |
+| SMS Scam Patterns       | Prize scams, callback traps, reply scams         |
+| Financial Request       | Money transfer/fee payment requests              |
+| Link Mismatch           | Display URL ≠ actual destination                 |
+| Entropy Analysis        | Randomly generated domain detection              |
 
 ### Classification Output
 
@@ -268,7 +277,7 @@ See `.env.example` files in each directory for all configuration options.
 
 ### 2️⃣ Solution (1 min)
 
-> "We built PhishGuard — an AI-powered platform that detects phishing emails, SMS smishing, and malicious URLs in real-time."
+> "We built ThreaLens — an AI-powered platform that detects phishing emails, SMS smishing, and malicious URLs in real-time."
 
 ### 3️⃣ Demo (3 min)
 
@@ -289,14 +298,15 @@ See `.env.example` files in each directory for all configuration options.
 - Mobile app (React Native)
 - Real-time email/SMS filtering
 - Integration with M-Pesa and banking apps
-- Machine learning model training on Kenyan phishing datasets
+- Deep learning models (BERT-based phishing detection)
+- Expanded Kenyan phishing dataset collection
 
 ---
 
-## 🏆 Why PhishGuard Wins
+## 🏆 Why ThreaLens Wins
 
 - ✅ **Real-world impact** — Solves actual cybersecurity problems in Kenya
-- ✅ **AI-Powered** — Advanced heuristic detection with explainability
+- ✅ **AI-Powered** — Hybrid ML classifiers + heuristic detection with explainability
 - ✅ **Easy to demo** — Visual, interactive, immediate results
 - ✅ **Kenya-focused** — M-Pesa, local banks, government-specific rules
 - ✅ **Production-ready** — Security hardened, deployable, well-documented
@@ -304,8 +314,10 @@ See `.env.example` files in each directory for all configuration options.
 
 ---
 
-## 📝 Technical Keywords for Judges
+## 📝 Technical Keywords
 
+- Machine Learning Classification (Random Forest, Naive Bayes)
+- TF-IDF Text Vectorization
 - Natural Language Processing (NLP)
 - Heuristic Pattern Analysis
 - Threat Intelligence
@@ -316,6 +328,7 @@ See `.env.example` files in each directory for all configuration options.
 - Shannon Entropy Analysis
 - Homograph Attack Detection
 - Typosquatting Detection
+- Dataset-Trained Models (SMS Spam Collection, Phishing URLs)
 
 ---
 
