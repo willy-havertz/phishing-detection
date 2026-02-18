@@ -62,7 +62,8 @@ function Scanner() {
       
       // Save to Firebase
       try {
-        await saveScan(user.uid, {
+        if (!user?.uid) throw new Error("Not authenticated — cannot save scan");
+        const saved = await saveScan(user.uid, {
           content_type: contentType,
           content_preview: sanitizedContent.substring(0, 100),
           classification: data.classification,
@@ -71,9 +72,9 @@ function Scanner() {
           explanation: data.explanation,
           threat_indicators: data.threat_indicators,
         });
+        if (saved) console.log("✅ Scan saved to Firebase:", saved.id);
       } catch (saveError) {
-        console.error("Failed to save scan:", saveError);
-        // Don't fail the scan if saving fails
+        console.error("❌ Failed to save scan to Firebase:", saveError.message);
       }
       
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
