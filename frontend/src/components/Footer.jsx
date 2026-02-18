@@ -7,7 +7,9 @@ function Footer() {
           <span className="footer-sep">—</span>
           <span>ML-Powered Phishing & Smishing Detection Platform</span>
         </div>
-        <div className="footer-sub">Built for cybersecurity awareness in Kenya 🇰🇪 | Hackathon 2026</div>
+        <div className="footer-sub">
+          <i className="fas fa-map-marker-alt" style={{ marginRight: '5px' }}></i> Built for cybersecurity awareness in Kenya | Phish Guard v3.0
+        </div>
       </div>
     </footer>
   );

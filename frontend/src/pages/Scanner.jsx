@@ -75,10 +75,10 @@ function Scanner() {
 
   const getResultConfig = (classification) => {
     switch (classification) {
-      case "safe": return { emoji: "✅", title: "Looks Safe", color: "#059669", bg: "#ECFDF5", border: "#A7F3D0", message: "No significant threats detected. This content appears legitimate.", action: "You can proceed with confidence, but always stay vigilant." };
-      case "suspicious": return { emoji: "⚠️", title: "Potentially Suspicious", color: "#D97706", bg: "#FFFBEB", border: "#FDE68A", message: "Some warning signs were detected. This content may not be safe.", action: "Proceed with caution. Verify the sender before taking any action." };
-      case "phishing": return { emoji: "🚨", title: "Phishing Detected!", color: "#DC2626", bg: "#FEF2F2", border: "#FECACA", message: "This content shows strong signs of being a phishing attempt!", action: "Do NOT click any links, share personal info, or respond to this message." };
-      default: return { emoji: "❓", title: "Unknown", color: "#6B7280", bg: "#F9FAFB", border: "#E5E7EB", message: "", action: "" };
+      case "safe": return { icon: "fas fa-check-circle", title: "Looks Safe", color: "var(--success)", bg: "var(--success-light)", border: "var(--theme-border)", message: "No significant threats detected. This content appears legitimate.", action: "You can proceed with confidence, but always stay vigilant." };
+      case "suspicious": return { icon: "fas fa-exclamation-triangle", title: "Potentially Suspicious", color: "var(--warning)", bg: "var(--warning-light)", border: "var(--theme-border)", message: "Some warning signs were detected. This content may not be safe.", action: "Proceed with caution. Verify the sender before taking any action." };
+      case "phishing": return { icon: "fas fa-shield-virus", title: "Phishing Detected!", color: "var(--danger)", bg: "var(--danger-light)", border: "var(--theme-border)", message: "This content shows strong signs of being a phishing attempt!", action: "Do NOT click any links, share personal info, or respond to this message." };
+      default: return { icon: "fas fa-question-circle", title: "Unknown", color: "var(--theme-text-tertiary)", bg: "var(--theme-bg-tertiary)", border: "var(--theme-border)", message: "", action: "" };
     }
   };
 
@@ -103,8 +103,8 @@ function Scanner() {
   return (
     <div className="scanner-page">
       <div className="scanner-hero">
-        <h1 className="scanner-hero-title">Stop. Think. Verify.</h1>
-        <p className="scanner-hero-subtitle">Scammers use urgency to rush your decisions. Before you click a link, reply to a message, or authorize a payment—stop and verify here first. Our AI unmasks threats in emails, SMS, and URLs instantly.</p>
+        <h1 className="scanner-hero-title">Stop. Think. Analyze.</h1>
+        <p className="scanner-hero-subtitle">Phishing protection at your fingertips. Our AI unmasks threats in emails, SMS, and URLs instantly. Don&apos;t let scammers rush your decisions.</p>
       </div>
 
       <section className="scanner-card">
@@ -117,12 +117,12 @@ function Scanner() {
         </div>
         <div className="content-type-selector">
           {[
-            { key: "email", icon: "📧", label: "Email", desc: "Check if an email is phishing" },
-            { key: "sms", icon: "📱", label: "SMS / Text", desc: "Verify if a text message is a scam" },
-            { key: "url", icon: "🔗", label: "Website Link", desc: "Analyze a web link for threats" },
+            { key: "email", icon: "fas fa-envelope", label: "Email", desc: "Check if an email is phishing" },
+            { key: "sms", icon: "fas fa-mobile-alt", label: "SMS / Text", desc: "Verify if a text message is a scam" },
+            { key: "url", icon: "fas fa-link", label: "Website Link", desc: "Analyze a web link for threats" },
           ].map((type) => (
             <button key={type.key} className={`type-card ${contentType === type.key ? "active" : ""}`} onClick={() => setContentType(type.key)}>
-              <span className="type-icon">{type.icon}</span>
+              <i className={`type-icon ${type.icon}`}></i>
               <span className="type-label">{type.label}</span>
               <span className="type-desc">{type.desc}</span>
             </button>
@@ -140,14 +140,14 @@ function Scanner() {
         </div>
         <div className="input-wrapper">
           <textarea className={`scan-input ${contentChanged ? "input-modified" : ""}`} placeholder={placeholders[contentType]} value={content} onChange={handleContentChange} maxLength={MAX_CONTENT_LENGTH} />
-          {contentChanged && <div className="change-badge" onClick={handleScan}>✏️ Content changed — Click to re-scan</div>}
+          {contentChanged && <div className="change-badge" onClick={handleScan}><i className="fas fa-pencil-alt"></i> Content changed — Click to re-scan</div>}
         </div>
         <div className="input-footer">
           <span className="char-count">{content.length.toLocaleString()} / {MAX_CONTENT_LENGTH.toLocaleString()} characters</span>
         </div>
-        {error && <div className="error-banner"><span className="error-icon">⚠️</span><span>{error}</span></div>}
+        {error && <div className="error-banner"><i className="fas fa-exclamation-triangle error-icon"></i><span>{error}</span></div>}
         <button className="scan-btn" onClick={handleScan} disabled={loading || !content.trim()}>
-          {loading ? (<><span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></span>Analyzing...</>) : (<>🔍 Analyze Now</>)}
+          {loading ? (<><span className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></span>Analyzing...</>) : (<><i className="fas fa-search"></i> Analyze Now</>)}
         </button>
         {loading && <div className="loading-info"><div className="loading-dots"><span></span><span></span><span></span></div><p>Our AI is checking for phishing patterns, suspicious links, and known scam tactics...</p></div>}
       </section>
@@ -159,7 +159,7 @@ function Scanner() {
             return (<>
               <section className="result-verdict" style={{ background: config.bg, borderColor: config.border }}>
                 <div className="verdict-main">
-                  <span className="verdict-emoji">{config.emoji}</span>
+                  <i className={`verdict-icon ${config.icon}`} style={{ color: config.color }}></i>
                   <div className="verdict-text">
                     <h2 className="verdict-title" style={{ color: config.color }}>{config.title}</h2>
                     <p className="verdict-message">{config.message}</p>
@@ -189,7 +189,11 @@ function Scanner() {
 
               {result.threat_indicators && result.threat_indicators.length > 0 && (
                 <section className="scanner-card findings-card">
-                  <h3 className="findings-title">🔎 What We Found <span className="findings-count">{result.threat_indicators.length} issue{result.threat_indicators.length !== 1 ? "s" : ""}</span></h3>
+                  <h3 className="findings-title">
+                    <i className="fas fa-microscope" style={{ marginRight: '10px', color: 'var(--primary)' }}></i> 
+                    Analysis Findings 
+                    <span className="findings-count">{result.threat_indicators.length} issue{result.threat_indicators.length !== 1 ? "s" : ""}</span>
+                  </h3>
                   <p className="findings-subtitle">Here are the specific warning signs detected in your content:</p>
                   <div className="findings-list">
                     {result.threat_indicators.map((indicator, index) => {
@@ -211,16 +215,16 @@ function Scanner() {
 
               {(!result.threat_indicators || result.threat_indicators.length === 0) && result.classification === "safe" && (
                 <section className="scanner-card safe-card">
-                  <div className="safe-icon">🎉</div>
+                  <div className="safe-icon"><i className="fas fa-check-double"></i></div>
                   <h3>No Threats Found</h3>
                   <p>We checked against our database of known phishing patterns, suspicious links, and scam tactics. No warning signs were detected.</p>
-                  <p className="safe-reminder">💡 <strong>Remember:</strong> Always be cautious with unsolicited messages. If something feels off, trust your instincts.</p>
+                  <p className="safe-reminder"><i className="fas fa-lightbulb" style={{ color: 'var(--warning)', marginRight: '6px' }}></i> <strong>Remember:</strong> Always be cautious with unsolicited messages. If something feels off, trust your instincts.</p>
                 </section>
               )}
 
               {result.recommendations && result.recommendations.length > 0 && (
                 <section className="scanner-card">
-                  <h3 className="rec-title">📋 What To Do Next</h3>
+                  <h3 className="rec-title"><i className="fas fa-clipboard-list" style={{ marginRight: '10px', color: 'var(--primary)' }}></i> What To Do Next</h3>
                   <div className="rec-list">
                     {result.recommendations.map((rec, index) => (
                       <div key={index} className="rec-item"><span className="rec-number">{index + 1}</span><span className="rec-text">{rec}</span></div>
@@ -231,61 +235,99 @@ function Scanner() {
 
               <section className="scanner-card technical-section">
                 <button className="technical-toggle" onClick={() => setShowTechnical(!showTechnical)}>
-                  <span>🤖 Technical Details</span>
+                  <span><i className="fas fa-microchip" style={{ marginRight: '8px' }}></i> Technical Analysis</span>
                   <span className="toggle-hint">{showTechnical ? "Hide" : "Show"} how our AI analyzed this</span>
-                  <span className={`toggle-arrow ${showTechnical ? "open" : ""}`}>▼</span>
+                  <i className={`fas fa-chevron-down toggle-arrow ${showTechnical ? "open" : ""}`}></i>
                 </button>
                 {showTechnical && (
                   <div className="technical-content">
                     {result.analysis_details && (
                       <div className="tech-block">
-                        <h4>⚖️ How We Scored This</h4>
-                        <p className="tech-explain">We use two detection methods and combine their results:</p>
+                        <h4><i className="fas fa-balance-scale" style={{ marginRight: '8px', color: 'var(--primary)' }}></i> Detection Methodology</h4>
+                        <p className="tech-explain">We combine pattern matching with real-time AI inference:</p>
                         <div className="score-breakdown">
-                          <div className="score-row"><div className="score-info"><span className="score-label">Pattern Matching</span><span className="score-desc">Checks against 200+ known phishing patterns</span></div><div className="score-bar-wrapper"><div className="score-bar"><div className="score-bar-fill heuristic" style={{ width: `${Math.round((result.analysis_details.heuristic_score || 0) * 100)}%` }} /></div><span className="score-pct">{Math.round((result.analysis_details.heuristic_score || 0) * 100)}%</span></div></div>
-                          <div className="score-row"><div className="score-info"><span className="score-label">Machine Learning</span><span className="score-desc">AI trained on thousands of real phishing samples</span></div><div className="score-bar-wrapper"><div className="score-bar"><div className="score-bar-fill ml" style={{ width: `${Math.round((result.analysis_details.ml_score || 0) * 100)}%` }} /></div><span className="score-pct">{Math.round((result.analysis_details.ml_score || 0) * 100)}%</span></div></div>
-                          <div className="score-row combined-row"><div className="score-info"><span className="score-label">Final Score</span><span className="score-desc">Combined analysis result</span></div><div className="score-bar-wrapper"><div className="score-bar"><div className="score-bar-fill combined" style={{ width: `${Math.round((result.analysis_details.combined_score || 0) * 100)}%` }} /></div><span className="score-pct">{Math.round((result.analysis_details.combined_score || 0) * 100)}%</span></div></div>
+                          <div className="score-row">
+                            <div className="score-info">
+                              <span className="score-label">Pattern Matching</span>
+                              <span className="score-desc">Checks against 200+ known phishing patterns</span>
+                            </div>
+                            <div className="score-bar-wrapper">
+                              <div className="score-bar">
+                                <div className="score-bar-fill heuristic" style={{ width: `${Math.round((result.analysis_details.heuristic_score || 0) * 100)}%` }} />
+                              </div>
+                              <span className="score-pct">{Math.round((result.analysis_details.heuristic_score || 0) * 100)}%</span>
+                            </div>
+                          </div>
+                          <div className="score-row">
+                            <div className="score-info">
+                              <span className="score-label">Machine Learning</span>
+                              <span className="score-desc">AI trained on thousands of real phishing samples</span>
+                            </div>
+                            <div className="score-bar-wrapper">
+                              <div className="score-bar">
+                                <div className="score-bar-fill ml" style={{ width: `${Math.round((result.analysis_details.ml_score || 0) * 100)}%` }} />
+                              </div>
+                              <span className="score-pct">{Math.round((result.analysis_details.ml_score || 0) * 100)}%</span>
+                            </div>
+                          </div>
+                          <div className="score-row combined-row">
+                            <div className="score-info">
+                              <span className="score-label">Final Threat Score</span>
+                              <span className="score-desc">Weighted confidence level</span>
+                            </div>
+                            <div className="score-bar-wrapper">
+                              <div className="score-bar">
+                                <div className="score-bar-fill combined" style={{ width: `${Math.round((result.analysis_details.combined_score || 0) * 100)}%` }} />
+                              </div>
+                              <span className="score-pct">{Math.round((result.analysis_details.combined_score || 0) * 100)}%</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
                     {result.ml_features && (<>
                       <div className="tech-block">
-                        <h4>🧠 AI Model Details</h4>
+                        <h4><i className="fas fa-brain" style={{ marginRight: '8px', color: 'var(--primary)' }}></i> AI Model Insights</h4>
                         <div className="tech-stats">
-                          <div className="tech-stat"><span className="tech-stat-label">Model</span><span className="tech-stat-value">{result.ml_features.model_used}</span></div>
-                          <div className="tech-stat"><span className="tech-stat-label">AI Confidence</span><span className="tech-stat-value">{Math.round(result.ml_features.ml_phishing_probability * 100)}% phishing</span></div>
-                          <div className="tech-stat"><span className="tech-stat-label">Features</span><span className="tech-stat-value">{result.analysis_details?.features_extracted || 0} analyzed</span></div>
+                          <div className="tech-stat"><span className="tech-stat-label">Model Engine</span><span className="tech-stat-value">{result.ml_features.model_used}</span></div>
+                          <div className="tech-stat"><span className="tech-stat-label">AI Consensus</span><span className="tech-stat-value">{Math.round(result.ml_features.ml_phishing_probability * 100)}% phishing</span></div>
+                          <div className="tech-stat"><span className="tech-stat-label">Features analyzed</span><span className="tech-stat-value">{result.analysis_details?.features_extracted || 0} signals</span></div>
                         </div>
                       </div>
                       {result.ml_features.ssl_status && (
                         <div className="tech-block">
-                          <h4>🔒 Website Security</h4>
+                          <h4><i className="fas fa-shield-alt" style={{ marginRight: '8px', color: 'var(--primary)' }}></i> Site Infrastructure</h4>
                           <div className="tech-stats">
-                            <div className="tech-stat"><span className="tech-stat-label">SSL Certificate</span><span className={`tech-stat-value ${result.ml_features.ssl_status.ssl_valid ? "text-safe" : "text-danger"}`}>{result.ml_features.ssl_status.ssl_valid ? "✅ Valid & Secure" : result.ml_features.ssl_status.has_ssl ? "⚠️ Invalid" : "❌ Not Secure"}</span></div>
-                            {result.ml_features.ssl_status.ssl_issuer && <div className="tech-stat"><span className="tech-stat-label">Issued By</span><span className="tech-stat-value">{result.ml_features.ssl_status.ssl_issuer}</span></div>}
-                            {result.ml_features.ssl_status.ssl_expiry_days !== null && <div className="tech-stat"><span className="tech-stat-label">Expires In</span><span className="tech-stat-value">{result.ml_features.ssl_status.ssl_expiry_days} days</span></div>}
+                            <div className="tech-stat">
+                              <span className="tech-stat-label">Security Protocol</span>
+                              <span className={`tech-stat-value ${result.ml_features.ssl_status.ssl_valid ? "text-safe" : "text-danger"}`}>
+                                {result.ml_features.ssl_status.ssl_valid ? <><i className="fas fa-check-circle" style={{ marginRight: '5px' }}></i> SSL Secured</> : result.ml_features.ssl_status.has_ssl ? <><i className="fas fa-exclamation-triangle" style={{ marginRight: '5px' }}></i> SSL invalid</> : <><i className="fas fa-times-circle" style={{ marginRight: '5px' }}></i> No Encryption</>}
+                              </span>
+                            </div>
+                            {result.ml_features.ssl_status.ssl_issuer && <div className="tech-stat"><span className="tech-stat-label">Cert Authority</span><span className="tech-stat-value">{result.ml_features.ssl_status.ssl_issuer}</span></div>}
+                            {result.ml_features.ssl_status.ssl_expiry_days !== null && <div className="tech-stat"><span className="tech-stat-label">Days to Expiry</span><span className="tech-stat-value">{result.ml_features.ssl_status.ssl_expiry_days}d</span></div>}
                           </div>
                         </div>
                       )}
                       {result.ml_features.domain_age && result.ml_features.domain_age.domain_age_days !== null && (
                         <div className="tech-block">
-                          <h4>📅 Domain Age</h4>
+                          <h4><i className="fas fa-calendar-alt" style={{ marginRight: '8px', color: 'var(--primary)' }}></i> Website Longevity</h4>
                           <div className="tech-stats">
-                            <div className="tech-stat"><span className="tech-stat-label">Age</span><span className={`tech-stat-value ${result.ml_features.domain_age.domain_age_days > 365 ? "text-safe" : "text-danger"}`}>{result.ml_features.domain_age.domain_age_days > 365 ? `${Math.floor(result.ml_features.domain_age.domain_age_days / 365)} years — Established` : `${result.ml_features.domain_age.domain_age_days} days — New domain ⚠️`}</span></div>
+                            <div className="tech-stat"><span className="tech-stat-label">Domain Age</span><span className={`tech-stat-value ${result.ml_features.domain_age.domain_age_days > 365 ? "text-safe" : "text-danger"}`}>{result.ml_features.domain_age.domain_age_days > 365 ? `${Math.floor(result.ml_features.domain_age.domain_age_days / 365)}y (Established)` : <><i className="fas fa-exclamation-triangle" style={{ marginRight: '5px' }}></i> {result.ml_features.domain_age.domain_age_days}d (Newly registered)</>}</span></div>
                           </div>
                         </div>
                       )}
                       {result.ml_features.top_ml_features && result.ml_features.top_ml_features.length > 0 && (
                         <div className="tech-block">
-                          <h4>📊 Key Detection Signals</h4>
+                          <h4><i className="fas fa-chart-line" style={{ marginRight: '8px', color: 'var(--primary)' }}></i> High Significance Signals</h4>
                           <div className="feature-bars">{result.ml_features.top_ml_features.map((feat, i) => (<div key={i} className="feature-bar-item"><span className="feature-name">{feat.feature.replace(/_/g, " ")}</span><div className="feature-bar-bg"><div className="feature-bar-fill" style={{ width: `${Math.min(feat.importance * 500, 100)}%` }} /></div><span className="feature-value">{(feat.importance * 100).toFixed(1)}%</span></div>))}</div>
                         </div>
                       )}
                       {result.ml_features.lexical_features && (
-                        <details className="raw-features"><summary>🔤 Lexical Features ({Object.keys(result.ml_features.lexical_features).length})</summary><div className="features-table">{Object.entries(result.ml_features.lexical_features).map(([key, value]) => (<div key={key} className="feature-row"><span className="feature-key">{key.replace(/_/g, " ")}</span><span className="feature-val">{typeof value === "number" ? value.toFixed(4) : String(value)}</span></div>))}</div></details>
+                        <details className="raw-features"><summary><i className="fas fa-spell-check" style={{ marginRight: '5px' }}></i> Lexical Features ({Object.keys(result.ml_features.lexical_features).length})</summary><div className="features-table">{Object.entries(result.ml_features.lexical_features).map(([key, value]) => (<div key={key} className="feature-row"><span className="feature-key">{key.replace(/_/g, " ")}</span><span className="feature-val">{typeof value === "number" ? value.toFixed(4) : String(value)}</span></div>))}</div></details>
                       )}
                       {result.ml_features.text_features && (
-                        <details className="raw-features"><summary>📝 Text Features ({Object.keys(result.ml_features.text_features).length})</summary><div className="features-table">{Object.entries(result.ml_features.text_features).map(([key, value]) => (<div key={key} className="feature-row"><span className="feature-key">{key.replace(/_/g, " ")}</span><span className="feature-val">{typeof value === "number" ? value.toFixed(4) : String(value)}</span></div>))}</div></details>
+                        <details className="raw-features"><summary><i className="fas fa-align-left" style={{ marginRight: '5px' }}></i> Semantic Features ({Object.keys(result.ml_features.text_features).length})</summary><div className="features-table">{Object.entries(result.ml_features.text_features).map(([key, value]) => (<div key={key} className="feature-row"><span className="feature-key">{key.replace(/_/g, " ")}</span><span className="feature-val">{typeof value === "number" ? value.toFixed(4) : String(value)}</span></div>))}</div></details>
                       )}
                     </>)}
                   </div>
@@ -300,11 +342,11 @@ function Scanner() {
         <section className="how-it-works">
           <h3 className="hiw-title">How It Works</h3>
           <div className="hiw-steps">
-            <div className="hiw-step"><div className="hiw-icon">📋</div><h4>1. Paste</h4><p>Copy the suspicious email, text message, or link</p></div>
-            <div className="hiw-arrow">→</div>
-            <div className="hiw-step"><div className="hiw-icon">🤖</div><h4>2. Analyze</h4><p>Our AI scans for 200+ phishing patterns and tactics</p></div>
-            <div className="hiw-arrow">→</div>
-            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-shield-check" style={{ color: 'var(--success)' }}></i> </div><h4>3. Know</h4><p>Get a clear verdict: Safe, Suspicious, or Phishing</p></div>
+            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-clipboard-list"></i></div><h4>1. Paste</h4><p>Copy the suspicious email, text message, or link</p></div>
+            <div className="hiw-arrow"><i className="fas fa-long-arrow-alt-right"></i></div>
+            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-robot"></i></div><h4>2. Analyze</h4><p>Our AI scans for 200+ phishing patterns and tactics</p></div>
+            <div className="hiw-arrow"><i className="fas fa-long-arrow-alt-right"></i></div>
+            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-shield-alt" style={{ color: 'var(--success)' }}></i> </div><h4>3. Know</h4><p>Get a clear verdict: Safe, Suspicious, or Phishing</p></div>
           </div>
         </section>
       )}

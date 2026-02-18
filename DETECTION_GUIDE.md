@@ -1,8 +1,8 @@
-# 🔬 ThreatLens Detection Guide
+# 🔬 Phish Guard Detection Guide
 
-## How ThreatLens Detects Phishing & Smishing
+## How Phish Guard Detects Phishing & Smishing
 
-This document provides a complete technical breakdown of the AI/ML detection techniques, algorithms, and tools used in ThreatLens v3.0 to identify phishing emails, SMS smishing, and malicious URLs.
+This document provides a complete technical breakdown of the AI/ML detection techniques, algorithms, and tools used in Phish Guard v3.0 to identify phishing emails, SMS smishing, and malicious URLs.
 
 ---
 

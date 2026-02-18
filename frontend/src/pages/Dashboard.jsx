@@ -24,9 +24,9 @@ function Dashboard() {
   ];
 
   const contentTypeData = [
-    { name: "Email", value: overview.email_count, icon: "📧" },
-    { name: "SMS", value: overview.sms_count, icon: "📱" },
-    { name: "URL", value: overview.url_count, icon: "🔗" },
+    { name: "Email", value: overview.email_count, icon: "fas fa-envelope" },
+    { name: "SMS", value: overview.sms_count, icon: "fas fa-mobile-alt" },
+    { name: "URL", value: overview.url_count, icon: "fas fa-link" },
   ];
 
   const formatLabel = (entry) => entry.name + " " + Math.round(entry.percent * 100) + "%";
@@ -37,17 +37,17 @@ function Dashboard() {
     <div className="dashboard-page">
       <div className="page-header">
         <div>
-          <h1 className="page-title">📊 Threat Dashboard</h1>
+          <h1 className="page-title"><i className="fas fa-chart-pie" style={{ marginRight: '15px' }}></i> Threat Dashboard</h1>
           <p className="page-subtitle">A real-time overview of your scanning activity and detected threats</p>
         </div>
       </div>
 
       {overview.total_scans === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">📭</div>
+          <div className="empty-icon"><i className="fas fa-folder-open"></i></div>
           <h3>No Scans Yet</h3>
           <p>Start by scanning some content on the <a href="/">Scanner</a> page. All your results will appear here in real-time as interactive charts and statistics.</p>
-          <a href="/" className="empty-cta">🔍 Go to Scanner</a>
+          <a href="/" className="empty-cta"><i className="fas fa-search" style={{ marginRight: '8px' }}></i> Go to Scanner</a>
         </div>
       ) : (
         <>
@@ -161,7 +161,7 @@ function Dashboard() {
           {/* Bottom Row */}
           <div className="charts-grid">
             <div className="chart-card">
-              <h3 className="chart-title">🚨 Recent Threats</h3>
+              <h3 className="chart-title"><i className="fas fa-shield-virus" style={{ marginRight: '10px', color: COLORS.phishing }}></i> Recent Threats</h3>
               <p className="chart-desc">Latest phishing and suspicious content detected</p>
               {recentThreats.length === 0 ? (
                 <div className="chart-empty"><p>No threats detected yet. Keep scanning to stay protected!</p></div>
@@ -170,7 +170,10 @@ function Dashboard() {
                   {recentThreats.map((threat, i) => (
                     <div key={i} className={`threat-item threat-${threat.classification}`}>
                       <div className="threat-top">
-                        <span className={"classification-badge " + threat.classification}>{threat.classification === "phishing" ? "🚨" : "⚠️"} {threat.classification}</span>
+                        <span className={"classification-badge " + threat.classification}>
+                          <i className={threat.classification === "phishing" ? "fas fa-exclamation-circle" : "fas fa-exclamation-triangle"} style={{ marginRight: '5px' }}></i>
+                          {threat.classification}
+                        </span>
                         <span className="threat-date">{new Date(threat.created_at).toLocaleString()}</span>
                       </div>
                       <p className="threat-explain">{threat.explanation}</p>
@@ -181,7 +184,7 @@ function Dashboard() {
             </div>
 
             <div className="chart-card">
-              <h3 className="chart-title">📈 Top Threat Patterns</h3>
+              <h3 className="chart-title"><i className="fas fa-chart-line" style={{ marginRight: '10px', color: 'var(--primary)' }}></i> Top Threat Patterns</h3>
               <p className="chart-desc">Most frequently detected phishing tactics</p>
               {topPatterns.length === 0 ? (
                 <div className="chart-empty"><p>Patterns will appear after scanning phishing content.</p></div>

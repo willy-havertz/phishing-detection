@@ -1,5 +1,5 @@
 """
-ThreatLens ML Service - Machine Learning Phishing & Smishing Detection
+Phish Guard ML Service - Machine Learning Phishing & Smishing Detection
 Real ML models with lexical features, SSL status, domain age analysis
 """
 
@@ -90,7 +90,7 @@ IS_PRODUCTION = os.environ.get("PRODUCTION", "false").lower() == "true"
 rate_limit_store: Dict[str, List[float]] = defaultdict(list)
 
 app = FastAPI(
-    title="ThreatLens ML Service",
+    title="Phish Guard ML Service",
     description="Machine Learning phishing & smishing detection with lexical analysis, SSL validation, and domain age checking",
     version="3.0.0",
     docs_url=None if IS_PRODUCTION else "/docs",

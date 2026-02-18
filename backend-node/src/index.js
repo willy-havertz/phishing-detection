@@ -23,7 +23,7 @@ app.use((req, res, next) => {
 
 // Health check
 app.get("/health", (req, res) => {
-  res.json({ status: "healthy", service: "ThreatLens API Gateway" });
+  res.json({ status: "healthy", service: "Phish Guard API Gateway" });
 });
 
 // Analyze content - proxies to ML service and saves to DB
@@ -304,7 +304,7 @@ app.listen(PORT, () => {
   console.log(`
   ╔═══════════════════════════════════════════════════════════╗
   ║                                                           ║
-  ║   🛡️  ThreatLens API Gateway                              ║
+  ║      Phish Guard API Gateway                              ║
   ║                                                           ║
   ║   Server running on port ${PORT}                            ║
   ║   ML Service: ${ML_SERVICE_URL}                    ║

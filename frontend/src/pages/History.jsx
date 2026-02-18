@@ -23,8 +23,8 @@ function History() {
     return true;
   });
 
-  const getEmoji = (c) => c === "safe" ? "✅" : c === "suspicious" ? "⚠️" : "🚨";
-  const getTypeEmoji = (t) => t === "email" ? "📧" : t === "sms" ? "📱" : "🔗";
+  const getIcon = (c) => c === "safe" ? "fas fa-check-circle" : c === "suspicious" ? "fas fa-exclamation-triangle" : "fas fa-exclamation-circle";
+  const getTypeIcon = (t) => t === "email" ? "fas fa-envelope" : t === "sms" ? "fas fa-mobile-alt" : "fas fa-link";
   const getTypeLabel = (t) => t === "email" ? "Email" : t === "sms" ? "SMS" : "URL";
 
   const getRiskConfig = (risk) => {
@@ -43,20 +43,20 @@ function History() {
     <div className="history-page">
       <div className="page-header">
         <div>
-          <h1 className="page-title">📋 Scan History</h1>
+          <h1 className="page-title"><i className="fas fa-history" style={{ marginRight: '15px' }}></i> Scan History</h1>
           <p className="page-subtitle">Review all your past scans and their results</p>
         </div>
         {scans.length > 0 && (
-          <button onClick={handleClearHistory} className="clear-btn">🗑️ Clear History</button>
+          <button onClick={handleClearHistory} className="clear-btn"><i className="fas fa-trash-alt" style={{ marginRight: '8px' }}></i> Clear History</button>
         )}
       </div>
 
       {scans.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">📭</div>
+          <div className="empty-icon"><i className="fas fa-inbox"></i></div>
           <h3>No Scan History Yet</h3>
           <p>All your scan results will be automatically saved here. Go to the <a href="/">Scanner</a> page to start checking content.</p>
-          <a href="/" className="empty-cta">🔍 Go to Scanner</a>
+          <a href="/" className="empty-cta"><i className="fas fa-search" style={{ marginRight: '8px' }}></i> Go to Scanner</a>
         </div>
       ) : (
         <>
@@ -66,18 +66,18 @@ function History() {
               <label className="filter-label">Filter by result:</label>
               <div className="filter-chips">
                 <button className={`filter-chip ${filter.classification === "" ? "active" : ""}`} onClick={() => setFilter({...filter, classification: ""})}>All</button>
-                <button className={`filter-chip chip-danger ${filter.classification === "phishing" ? "active" : ""}`} onClick={() => setFilter({...filter, classification: "phishing"})}>🚨 Phishing</button>
-                <button className={`filter-chip chip-warn ${filter.classification === "suspicious" ? "active" : ""}`} onClick={() => setFilter({...filter, classification: "suspicious"})}>⚠️ Suspicious</button>
-                <button className={`filter-chip chip-safe ${filter.classification === "safe" ? "active" : ""}`} onClick={() => setFilter({...filter, classification: "safe"})}>✅ Safe</button>
+                <button className={`filter-chip chip-danger ${filter.classification === "phishing" ? "active" : ""}`} onClick={() => setFilter({...filter, classification: "phishing"})}><i className="fas fa-exclamation-circle" style={{ marginRight: '5px' }}></i> Phishing</button>
+                <button className={`filter-chip chip-warn ${filter.classification === "suspicious" ? "active" : ""}`} onClick={() => setFilter({...filter, classification: "suspicious"})}><i className="fas fa-exclamation-triangle" style={{ marginRight: '5px' }}></i> Suspicious</button>
+                <button className={`filter-chip chip-safe ${filter.classification === "safe" ? "active" : ""}`} onClick={() => setFilter({...filter, classification: "safe"})}><i className="fas fa-check-circle" style={{ marginRight: '5px' }}></i> Safe</button>
               </div>
             </div>
             <div className="filter-group">
               <label className="filter-label">Content type:</label>
               <div className="filter-chips">
                 <button className={`filter-chip ${filter.content_type === "" ? "active" : ""}`} onClick={() => setFilter({...filter, content_type: ""})}>All</button>
-                <button className={`filter-chip ${filter.content_type === "email" ? "active" : ""}`} onClick={() => setFilter({...filter, content_type: "email"})}>📧 Email</button>
-                <button className={`filter-chip ${filter.content_type === "sms" ? "active" : ""}`} onClick={() => setFilter({...filter, content_type: "sms"})}>📱 SMS</button>
-                <button className={`filter-chip ${filter.content_type === "url" ? "active" : ""}`} onClick={() => setFilter({...filter, content_type: "url"})}>🔗 URL</button>
+                <button className={`filter-chip ${filter.content_type === "email" ? "active" : ""}`} onClick={() => setFilter({...filter, content_type: "email"})}><i className="fas fa-envelope" style={{ marginRight: '5px' }}></i> Email</button>
+                <button className={`filter-chip ${filter.content_type === "sms" ? "active" : ""}`} onClick={() => setFilter({...filter, content_type: "sms"})}><i className="fas fa-mobile-alt" style={{ marginRight: '5px' }}></i> SMS</button>
+                <button className={`filter-chip ${filter.content_type === "url" ? "active" : ""}`} onClick={() => setFilter({...filter, content_type: "url"})}><i className="fas fa-link" style={{ marginRight: '5px' }}></i> URL</button>
               </div>
             </div>
           </div>
@@ -96,9 +96,9 @@ function History() {
                   <div className="history-card-top">
                     <div className="history-card-left">
                       <span className={`classification-badge ${s.classification}`}>
-                        {getEmoji(s.classification)} {s.classification.charAt(0).toUpperCase() + s.classification.slice(1)}
+                        <i className={getIcon(s.classification)} style={{ marginRight: '6px' }}></i> {s.classification.charAt(0).toUpperCase() + s.classification.slice(1)}
                       </span>
-                      <span className="history-type">{getTypeEmoji(s.content_type)} {getTypeLabel(s.content_type)}</span>
+                      <span className="history-type"><i className={getTypeIcon(s.content_type)} style={{ marginRight: '6px' }}></i> {getTypeLabel(s.content_type)}</span>
                     </div>
                     <div className="history-card-right">
                       <div className="history-confidence">
@@ -139,7 +139,7 @@ function History() {
                       )}
                     </div>
                   )}
-                  <div className="expand-hint">{isExpanded ? "Click to collapse ▲" : "Click to see details ▼"}</div>
+                  <div className="expand-hint">{isExpanded ? <><i className="fas fa-chevron-up" style={{ marginRight: '5px' }}></i> Click to collapse</> : <><i className="fas fa-chevron-down" style={{ marginRight: '5px' }}></i> Click to see details</>}</div>
                 </div>
               );
             })}

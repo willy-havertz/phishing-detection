@@ -21,28 +21,28 @@ function Education() {
   const educationalContent = {
     urgency: {
       title: "Urgency Tactics",
-      icon: "⚡",
+      icon: "fas fa-bolt",
       description: "Scammers create fake urgency to pressure you into acting without thinking. They want you to panic.",
       whatToDo: "Take a breath. Legitimate organizations give you time. If it feels rushed, it's probably a scam.",
       examples: patterns?.urgency_tactics || ["Immediate action required", "Your account will be suspended", "Act within 24 hours", "Final warning", "Security alert"],
     },
     credential: {
       title: "Credential Harvesting",
-      icon: "🔐",
+      icon: "fas fa-key",
       description: "Scammers try to trick you into giving away passwords, PINs, or personal details by pretending to be trusted services.",
       whatToDo: "Never share passwords or PINs via email, SMS, or phone. Real companies never ask for this.",
       examples: patterns?.credential_harvesting || ["Verify your account", "Update your password", "Confirm your identity", "Enter your M-Pesa PIN", "Banking details required"],
     },
     impersonation: {
       title: "Brand Impersonation",
-      icon: "🎭",
+      icon: "fas fa-user-secret",
       description: "Scammers pretend to be from trusted organizations like banks, phone companies, or government agencies.",
       whatToDo: "Always verify by contacting the organization directly through their official website or phone number.",
       examples: patterns?.common_impersonations || ["Banks (Equity, KCB, Co-op)", "M-Pesa / Safaricom", "Government (KRA, NTSA)", "E-commerce (Jumia, Amazon)", "Social media (Facebook, WhatsApp)"],
     },
     redFlags: {
       title: "Red Flags to Watch",
-      icon: "🚩",
+      icon: "fas fa-flag",
       description: "Key warning signs that a message or website might be a phishing attempt.",
       whatToDo: "If you spot any of these signs, don't interact with the message. Use Phish Guard to scan it instead!",
       examples: patterns?.red_flags || ["Misspelled domain names", "URL shorteners (bit.ly)", "IP addresses instead of domains", "Generic greetings (Dear Customer)", "Grammar errors", "Requests for sensitive info"],
@@ -50,9 +50,9 @@ function Education() {
   };
 
   const kenyaSpecific = [
-    { icon: "📱", title: "M-Pesa Scams", description: "Safaricom will NEVER call or text asking for your M-Pesa PIN. No one from Safaricom needs your PIN — ever.", tips: ["Never share your M-Pesa PIN with anyone", "Verify M-Pesa issues by dialing *234#", "Report scam numbers to 0722 000 000", "Don't respond to \"reversal\" requests from strangers"] },
-    { icon: "🏦", title: "Banking Fraud", description: "Banks in Kenya will never ask for your full account details, passwords, or OTPs via SMS or email.", tips: ["Call your bank using the number on your card", "Never click links claiming to be from your bank", "Check URLs carefully — is it the real domain?", "Enable transaction alerts on all accounts"] },
-    { icon: "📧", title: "Email Phishing", description: "Phishing emails often impersonate universities, employers, KRA, or delivery services.", tips: ["Check the sender's email address carefully", "Hover over links to see where they really go", "Be suspicious of unexpected attachments", "When in doubt, contact IT support or the sender directly"] },
+    { icon: "fas fa-mobile-alt", title: "M-Pesa Scams", description: "Safaricom will NEVER call or text asking for your M-Pesa PIN. No one from Safaricom needs your PIN — ever.", tips: ["Never share your M-Pesa PIN with anyone", "Verify M-Pesa issues by dialing *234#", "Report scam numbers to 0722 000 000", "Don't respond to \"reversal\" requests from strangers"] },
+    { icon: "fas fa-university", title: "Banking Fraud", description: "Banks in Kenya will never ask for your full account details, passwords, or OTPs via SMS or email.", tips: ["Call your bank using the number on your card", "Never click links claiming to be from your bank", "Check URLs carefully — is it the real domain?", "Enable transaction alerts on all accounts"] },
+    { icon: "fas fa-envelope", title: "Email Phishing", description: "Phishing emails often impersonate universities, employers, KRA, or delivery services.", tips: ["Check the sender's email address carefully", "Hover over links to see where they really go", "Be suspicious of unexpected attachments", "When in doubt, contact IT support or the sender directly"] },
   ];
 
   const quizzes = [
@@ -62,10 +62,10 @@ function Education() {
   ];
 
   const protectionSteps = [
-    { step: 1, action: "Stop", icon: "🛑", description: "Don't click links or download attachments immediately. Take a moment." },
-    { step: 2, action: "Think", icon: "🤔", description: "Does this make sense? Would the organization really contact you this way?" },
-    { step: 3, action: "Verify", icon: "🔍", description: "Contact the organization directly through official channels to confirm." },
-    { step: 4, action: "Report", icon: "📢", description: "Report suspicious messages to your IT team, bank, or the impersonated organization." },
+    { step: 1, action: "Stop", icon: "fas fa-hand-paper", description: "Don't click links or download attachments immediately. Take a moment." },
+    { step: 2, action: "Think", icon: "fas fa-brain", description: "Does this make sense? Would the organization really contact you this way?" },
+    { step: 3, action: "Verify", icon: "fas fa-search", description: "Contact the organization directly through official channels to confirm." },
+    { step: 4, action: "Report", icon: "fas fa-bullhorn", description: "Report suspicious messages to your IT team, bank, or the impersonated organization." },
   ];
 
   if (loading) return <div className="loading"><div className="spinner"></div></div>;
@@ -74,21 +74,23 @@ function Education() {
     <div className="education-page">
       <div className="page-header">
         <div>
-          <h1 className="page-title">📚 Learn to Spot Scams</h1>
+          <h1 className="page-title"><i className="fas fa-graduation-cap" style={{ marginRight: '15px' }}></i> Learn to Spot Scams</h1>
           <p className="page-subtitle">Understanding phishing tactics is your first line of defense. Knowledge is power!</p>
         </div>
       </div>
 
       {/* What is Phishing */}
       <section className="edu-intro">
-        <div className="edu-intro-icon">🎣</div>
+        <div className="edu-intro-icon">
+          <i className="fas fa-fish"></i>
+        </div>
         <div className="edu-intro-content">
           <h2>What is Phishing?</h2>
           <p><strong>Phishing</strong> is when criminals try to steal your personal information (passwords, bank details, M-Pesa PINs) by pretending to be someone you trust — like your bank, Safaricom, or a government agency.</p>
           <p>They use emails, SMS messages, and fake websites to trick you. <strong>Anyone can be a target.</strong></p>
         </div>
         <div className="edu-intro-alert">
-          <strong>⚠️ In Kenya:</strong> Phishing attacks targeting M-Pesa, bank accounts, and KRA are increasingly common. Always verify before sharing any personal or financial information.
+          <strong><i className="fas fa-exclamation-triangle" style={{ marginRight: '8px' }}></i> In Kenya:</strong> Phishing attacks targeting M-Pesa, bank accounts, and KRA are increasingly common. Always verify before sharing any personal or financial information.
         </div>
       </section>
 
@@ -99,7 +101,9 @@ function Education() {
         <div className="protection-grid">
           {protectionSteps.map((item) => (
             <div key={item.step} className="protection-step">
-              <div className="protection-icon">{item.icon}</div>
+              <div className="protection-icon">
+                <i className={item.icon}></i>
+              </div>
               <div className="protection-num">Step {item.step}</div>
               <h3 className="protection-action">{item.action}</h3>
               <p className="protection-desc">{item.description}</p>
@@ -110,18 +114,20 @@ function Education() {
 
       {/* Phishing Tactics */}
       <section className="edu-section">
-        <h2 className="edu-section-title">🎯 Common Scam Tactics</h2>
+        <h2 className="edu-section-title"><i className="fas fa-bullseye" style={{ marginRight: '10px', color: 'var(--primary)' }}></i> Common Scam Tactics</h2>
         <p className="edu-section-desc">Scammers use these techniques to trick you. Learn to recognize them:</p>
         <div className="tactics-grid">
           {Object.values(educationalContent).map((category, index) => (
             <div className="tactic-card" key={index}>
               <div className="tactic-header">
-                <span className="tactic-icon">{category.icon}</span>
+                <span className="tactic-icon">
+                  <i className={category.icon}></i>
+                </span>
                 <h3>{category.title}</h3>
               </div>
               <p className="tactic-desc">{category.description}</p>
               <div className="tactic-tip">
-                <strong>💡 What to do:</strong> {category.whatToDo}
+                <strong><i className="fas fa-lightbulb" style={{ marginRight: '5px' }}></i> What to do:</strong> {category.whatToDo}
               </div>
               <div className="tactic-examples">
                 <h4>Watch out for:</h4>
@@ -138,13 +144,15 @@ function Education() {
 
       {/* Kenya Specific */}
       <section className="edu-section">
-        <h2 className="edu-section-title">🇰🇪 Kenya-Specific Threats</h2>
+        <h2 className="edu-section-title"><i className="fas fa-map-marker-alt" style={{ marginRight: '10px', color: 'var(--primary)' }}></i> Kenya-Specific Threats</h2>
         <p className="edu-section-desc">These scams specifically target Kenyans. Be extra careful with:</p>
         <div className="kenya-grid">
           {kenyaSpecific.map((item, index) => (
             <div className="kenya-card" key={index}>
               <div className="kenya-header">
-                <span className="kenya-icon">{item.icon}</span>
+                <span className="kenya-icon">
+                  <i className={item.icon}></i>
+                </span>
                 <h3>{item.title}</h3>
               </div>
               <p className="kenya-desc">{item.description}</p>
@@ -160,7 +168,7 @@ function Education() {
 
       {/* Quiz Section */}
       <section className="edu-section">
-        <h2 className="edu-section-title">🧠 Test Your Knowledge</h2>
+        <h2 className="edu-section-title"><i className="fas fa-brain" style={{ marginRight: '10px', color: 'var(--primary)' }}></i> Test Your Knowledge</h2>
         <p className="edu-section-desc">Can you spot the scam? Try these quick quizzes:</p>
         <div className="quiz-grid">
           {quizzes.map((quiz) => (
@@ -187,7 +195,7 @@ function Education() {
               </div>
               {activeQuiz === quiz.id && quizAnswer !== null && (
                 <div className={`quiz-result ${quizAnswer === quiz.correct ? "quiz-correct" : "quiz-wrong"}`}>
-                  {quizAnswer === quiz.correct ? "✅ Correct! Well done!" : `❌ Not quite. The correct answer is: ${quiz.options[quiz.correct]}`}
+                  {quizAnswer === quiz.correct ? <><i className="fas fa-check-circle" style={{ marginRight: '5px' }}></i> Correct! Well done!</> : <><i className="fas fa-times-circle" style={{ marginRight: '5px' }}></i> Not quite. The correct answer is: {quiz.options[quiz.correct]}</>}
                 </div>
               )}
             </div>
@@ -197,10 +205,10 @@ function Education() {
 
       {/* Quick Reference */}
       <section className="quick-ref">
-        <h2 className="quick-ref-title">📋 Quick Reference Card</h2>
+        <h2 className="quick-ref-title"><i className="fas fa-clipboard-list" style={{ marginRight: '10px' }}></i> Quick Reference Card</h2>
         <div className="quick-ref-grid">
           <div className="quick-ref-col">
-            <h4 className="ref-heading ref-danger">🚨 NEVER Do This</h4>
+            <h4 className="ref-heading ref-danger"><i className="fas fa-times-circle" style={{ marginRight: '8px' }}></i> NEVER Do This</h4>
             <ul className="ref-list">
               <li>Share passwords via email/SMS</li>
               <li>Click links from unknown senders</li>
@@ -210,7 +218,7 @@ function Education() {
             </ul>
           </div>
           <div className="quick-ref-col">
-            <h4 className="ref-heading ref-safe">✅ ALWAYS Do This</h4>
+            <h4 className="ref-heading ref-safe"><i className="fas fa-check-circle" style={{ marginRight: '8px' }}></i> ALWAYS Do This</h4>
             <ul className="ref-list">
               <li>Verify sender identity</li>
               <li>Type URLs directly in browser</li>
@@ -220,7 +228,7 @@ function Education() {
             </ul>
           </div>
           <div className="quick-ref-col">
-            <h4 className="ref-heading ref-warn">📞 Report To</h4>
+            <h4 className="ref-heading ref-warn"><i className="fas fa-phone-alt" style={{ marginRight: '8px' }}></i> Report To</h4>
             <ul className="ref-list">
               <li>Safaricom: 0722 000 000</li>
               <li>Your bank&apos;s fraud hotline</li>
