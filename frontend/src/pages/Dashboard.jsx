@@ -3,19 +3,33 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend,
 } from "recharts";
-import { getStats, getDailyTrends, getTopPatterns, getRecentThreats } from "../utils/scanStorage";
+import { subscribeScanHistory, getStats, getDailyTrends, getTopPatterns, getRecentThreats } from "../utils/firebaseStorage";
+import { useAuth } from "../context/AuthContext";
 
 const COLORS = { phishing: "#EF4444", suspicious: "#F59E0B", safe: "#10B981", primary: "#ACC8A2", dark: "#1A2517" };
 
 function Dashboard() {
+  const { user } = useAuth();
+  const [scans, setScans] = useState([]);
   const [overview, setOverview] = useState({ total_scans: 0, phishing_count: 0, suspicious_count: 0, safe_count: 0, email_count: 0, sms_count: 0, url_count: 0 });
   const [dailyTrends, setDailyTrends] = useState([]);
   const [topPatterns, setTopPatterns] = useState([]);
   const [recentThreats, setRecentThreats] = useState([]);
 
-  const loadData = useCallback(() => { setOverview(getStats()); setDailyTrends(getDailyTrends()); setTopPatterns(getTopPatterns()); setRecentThreats(getRecentThreats()); }, []);
-
-  useEffect(() => { loadData(); const handleUpdate = () => loadData(); window.addEventListener("scanUpdated", handleUpdate); return () => window.removeEventListener("scanUpdated", handleUpdate); }, [loadData]);
+  useEffect(() => {
+    if (!user) return;
+    
+    // Subscribe to real-time scan updates
+    const unsubscribe = subscribeScanHistory(user.uid, (scansData) => {
+      setScans(scansData);
+      setOverview(getStats(scansData));
+      setDailyTrends(getDailyTrends(scansData));
+      setTopPatterns(getTopPatterns(scansData));
+      setRecentThreats(getRecentThreats(scansData));
+    });
+    
+    return () => unsubscribe();
+  }, [user]);
 
   const pieData = [
     { name: "Phishing", value: overview.phishing_count, color: COLORS.phishing },

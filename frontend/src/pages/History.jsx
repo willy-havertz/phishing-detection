@@ -1,19 +1,33 @@
 import { useState, useEffect, useCallback } from "react";
-import { getScanHistory, clearHistory } from "../utils/scanStorage";
+import { subscribeScanHistory, clearHistory } from "../utils/firebaseStorage";
+import { useAuth } from "../context/AuthContext";
 
 function History() {
+  const { user } = useAuth();
   const [scans, setScans] = useState([]);
   const [filter, setFilter] = useState({ classification: "", content_type: "" });
   const [expandedId, setExpandedId] = useState(null);
 
-  const loadScans = useCallback(() => { setScans(getScanHistory()); }, []);
+  useEffect(() => {
+    if (!user) return;
+    
+    // Subscribe to real-time scan updates
+    const unsubscribe = subscribeScanHistory(user.uid, (scansData) => {
+      setScans(scansData);
+    });
+    
+    return () => unsubscribe();
+  }, [user]);
 
-  useEffect(() => { loadScans(); const handleUpdate = () => loadScans(); window.addEventListener("scanUpdated", handleUpdate); return () => window.removeEventListener("scanUpdated", handleUpdate); }, [loadScans]);
-
-  const handleClearHistory = () => {
+  const handleClearHistory = async () => {
     if (window.confirm("Are you sure you want to clear all scan history? This cannot be undone.")) {
-      clearHistory();
-      setScans([]);
+      try {
+        await clearHistory(user.uid);
+        setScans([]);
+      } catch (error) {
+        console.error("Failed to clear history:", error);
+        alert("Failed to clear history. Please try again.");
+      }
     }
   };
 

@@ -1,6 +1,19 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Header() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   return (
     <header className="header">
       <NavLink to="/" className="logo">
@@ -13,24 +26,38 @@ function Header() {
         </div>
       </NavLink>
 
-      <nav className="nav">
-        <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-          <span className="nav-icon">🔍</span>
-          <span className="nav-label">Scan</span>
-        </NavLink>
-        <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-          <span className="nav-icon">📊</span>
-          <span className="nav-label">Dashboard</span>
-        </NavLink>
-        <NavLink to="/history" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-          <span className="nav-icon">📋</span>
-          <span className="nav-label">History</span>
-        </NavLink>
-        <NavLink to="/education" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-          <span className="nav-icon">📚</span>
-          <span className="nav-label">Learn</span>
-        </NavLink>
-      </nav>
+      {user && (
+        <>
+          <nav className="nav">
+            <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+              <span className="nav-icon">🔍</span>
+              <span className="nav-label">Scan</span>
+            </NavLink>
+            <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+              <span className="nav-icon">📊</span>
+              <span className="nav-label">Dashboard</span>
+            </NavLink>
+            <NavLink to="/history" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+              <span className="nav-icon">📋</span>
+              <span className="nav-label">History</span>
+            </NavLink>
+            <NavLink to="/education" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
+              <span className="nav-icon">📚</span>
+              <span className="nav-label">Learn</span>
+            </NavLink>
+          </nav>
+
+          <div className="user-menu">
+            <div className="user-info">
+              <span className="user-icon">👤</span>
+              <span className="user-name">{user.displayName || user.email}</span>
+            </div>
+            <button onClick={handleLogout} className="logout-btn">
+              Logout
+            </button>
+          </div>
+        </>
+      )}
     </header>
   );
 }
