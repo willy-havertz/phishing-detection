@@ -378,11 +378,11 @@ function Scanner() {
         <section className="how-it-works">
           <h3 className="hiw-title">How It Works</h3>
           <div className="hiw-steps">
-            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-clipboard-list"></i></div><h4>1. Paste</h4><p>Copy the suspicious email, text message, or link</p></div>
+            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-clipboard-list" style={{ color: 'var(--primary)' }}></i></div><h4>1. Paste</h4><p>Copy the suspicious email, text message, or link</p></div>
             <div className="hiw-arrow"><i className="fas fa-long-arrow-alt-right"></i></div>
-            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-robot"></i></div><h4>2. Analyze</h4><p>Our AI scans for 200+ phishing patterns and tactics</p></div>
+            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-robot" style={{ color: 'var(--primary)' }}></i></div><h4>2. Analyze</h4><p>Our AI scans for 200+ phishing patterns and tactics</p></div>
             <div className="hiw-arrow"><i className="fas fa-long-arrow-alt-right"></i></div>
-            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-clipboard-check" style={{ color: 'var(--success)' }}></i> </div><h4>3. Know</h4><p>Get a clear verdict: Safe, Suspicious, or Phishing</p></div>
+            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-clipboard-check" style={{ color: 'var(--primary)' }}></i> </div><h4>3. Know</h4><p>Get a clear verdict: Safe, Suspicious, or Phishing</p></div>
           </div>
         </section>
       )}

@@ -1916,12 +1916,15 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  height: 22px;
+  min-width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: var(--gray-100);
+  background: var(--primary);
+  color: white !important;
   font-weight: 700;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
+  margin-right: 12px;
+  flex-shrink: 0;
 }
 .quiz-result {
   margin-top: 0.75rem;
