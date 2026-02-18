@@ -226,12 +226,12 @@ body {
   gap: 0.4rem;
 }
 .nav-link:hover {
-  color: var(--white);
-  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--primary);
+  background-color: transparent !important;
 }
 .nav-link.active {
-  color: var(--white);
-  background-color: var(--dark-lighter);
+  color: var(--primary);
+  background-color: transparent !important;
 }
 .nav-icon {
   font-size: 1rem;
