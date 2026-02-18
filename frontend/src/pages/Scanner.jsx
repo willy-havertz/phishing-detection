@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { saveScan } from "../utils/scanStorage";
+import { saveScan } from "../utils/firebaseStorage";
 import { sanitizeInput, createRateLimiter } from "../utils/security";
+import { useAuth } from "../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 const MAX_CONTENT_LENGTH = 50000;
 const checkRateLimit = createRateLimiter(10, 60000);
 
 function Scanner() {
+  const { user } = useAuth();
   const [content, setContent] = useState("");
   const [contentType, setContentType] = useState("email");
   const [loading, setLoading] = useState(false);
@@ -57,15 +59,24 @@ function Scanner() {
       setResult(data);
       setLastScannedContent(sanitizedContent);
       setContentChanged(false);
-      saveScan({
-        content_type: contentType,
-        content_preview: sanitizedContent.substring(0, 100),
-        classification: data.classification,
-        confidence_score: data.confidence_score,
-        risk_level: data.risk_level,
-        explanation: data.explanation,
-        threat_indicators: data.threat_indicators,
-      });
+      
+      // Save to Firebase
+      try {
+        if (!user?.uid) throw new Error("Not authenticated — cannot save scan");
+        const saved = await saveScan(user.uid, {
+          content_type: contentType,
+          content_preview: sanitizedContent.substring(0, 100),
+          classification: data.classification,
+          confidence_score: data.confidence_score,
+          risk_level: data.risk_level,
+          explanation: data.explanation,
+          threat_indicators: data.threat_indicators,
+        });
+        if (saved) console.log("✅ Scan saved to Firebase:", saved.id);
+      } catch (saveError) {
+        console.error("❌ Failed to save scan to Firebase:", saveError.message);
+      }
+      
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch (err) {
       if (err.name === "AbortError") return;
