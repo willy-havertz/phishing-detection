@@ -116,4 +116,3 @@ export const startSmsListener = (userId, onNewScan) => {
 
   return unsubscribe;
 };
-};
