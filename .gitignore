@@ -34,6 +34,9 @@ build/
 # ========================
 frontend/dist/
 frontend/build/
+backend-ml/requirements.txt
+backend-ml/package.json
+backend-ml/package-lock.json
 
 # ========================
 # IDE / Editor
