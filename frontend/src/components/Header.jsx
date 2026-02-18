@@ -14,10 +14,6 @@ function Header() {
   return (
     <>
       <header className="header">
-        <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>
-          <i className="fas fa-bars"></i>
-        </button>
-
         <NavLink to="/" className="logo">
           <img src="/logo.svg" alt="Phish Guard Logo" className="logo-img" style={{ width: '40px', height: '40px' }} />
           <div className="logo-text-wrap">
@@ -47,6 +43,9 @@ function Header() {
 
         <div className="header-actions">
           <ThemeToggle />
+          <button className="menu-toggle" onClick={() => setIsSidebarOpen(true)}>
+            <i className="fas fa-bars"></i>
+          </button>
         </div>
       </header>
 

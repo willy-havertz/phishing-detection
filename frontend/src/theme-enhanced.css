@@ -130,25 +130,82 @@ body {
   z-index: 1000;
   display: flex !important;
   align-items: center !important;
-  justify-content: space-between !important;
+  justify-content: flex-end !important; /* Pushes everything to the right */
+  gap: 1.5rem !important;
   padding: 0.75rem 1.5rem !important;
   transition: all var(--transition-slow);
 }
 
+.logo {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  text-decoration: none !important;
+  order: 1; /* Name and Logo pushed to the right */
+}
+
+.header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  flex-shrink: 0 !important;
+  order: 2; /* Actions next to Logo */
+}
+
 .menu-toggle {
-  display: none !important;
-  background: transparent !important;
-  border: none !important;
-  font-size: 1.25rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(1, 114, 221, 0.05) !important;
+  border: 1.5px solid rgba(1, 114, 221, 0.2) !important;
+  border-radius: 50% !important;
+  font-size: 1rem !important;
   color: var(--primary) !important;
   cursor: pointer !important;
+  padding: 0 !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: none !important;
+  transition: all var(--transition-base) !important;
+}
+
+.menu-toggle:hover {
+  background: rgba(1, 114, 221, 0.1) !important;
+  transform: scale(1.05) !important;
+}
+
+.desktop-nav {
+  margin-right: auto !important;
+  display: flex !important;
+  gap: 1.5rem !important;
 }
 
 @media (max-width: 991px) {
+  .header {
+    padding: 0.5rem 1rem !important;
+    gap: 0.5rem !important;
+    justify-content: flex-end !important;
+  }
   .menu-toggle {
-    display: block !important;
+    display: flex !important;
   }
   .desktop-nav {
+    display: none !important;
+  }
+  .header-actions {
+    gap: 0.5rem !important;
+  }
+  
+  .logo-img {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  
+  .logo-text {
+    font-size: 1.05rem !important;
+  }
+  
+  .logo-tagline {
     display: none !important;
   }
 }
