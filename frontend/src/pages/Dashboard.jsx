@@ -55,7 +55,7 @@ function Dashboard() {
           <div className="stats-grid">
             <div className="stat-card stat-total">
               <div className="stat-card-inner">
-                <div className="stat-icon-wrap">🛡️</div>
+                <div className="stat-icon-wrap"><i className="fas fa-microchip" style={{ color: 'var(--primary)' }}></i></div>
                 <div className="stat-content">
                   <div className="stat-value">{overview.total_scans}</div>
                   <div className="stat-label">Total Scans</div>
@@ -65,7 +65,7 @@ function Dashboard() {
             </div>
             <div className="stat-card stat-danger">
               <div className="stat-card-inner">
-                <div className="stat-icon-wrap">🚨</div>
+                <div className="stat-icon-wrap"><i className="fas fa-skull-crossbones" style={{ color: COLORS.phishing }}></i></div>
                 <div className="stat-content">
                   <div className="stat-value" style={{ color: COLORS.phishing }}>{overview.phishing_count}</div>
                   <div className="stat-label">Phishing Detected</div>
@@ -75,7 +75,7 @@ function Dashboard() {
             </div>
             <div className="stat-card stat-warn">
               <div className="stat-card-inner">
-                <div className="stat-icon-wrap">⚠️</div>
+                <div className="stat-icon-wrap"><i className="fas fa-exclamation-triangle" style={{ color: COLORS.suspicious }}></i></div>
                 <div className="stat-content">
                   <div className="stat-value" style={{ color: COLORS.suspicious }}>{overview.suspicious_count}</div>
                   <div className="stat-label">Suspicious</div>
@@ -85,7 +85,7 @@ function Dashboard() {
             </div>
             <div className="stat-card stat-safe">
               <div className="stat-card-inner">
-                <div className="stat-icon-wrap">✅</div>
+                <div className="stat-icon-wrap"><i className="fas fa-check-circle" style={{ color: COLORS.safe }}></i></div>
                 <div className="stat-content">
                   <div className="stat-value" style={{ color: COLORS.safe }}>{overview.safe_count}</div>
                   <div className="stat-label">Safe</div>

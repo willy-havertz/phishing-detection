@@ -742,11 +742,6 @@ body {
   }
 }
 
-.scanner-hero-icon {
-  animation: float 3s ease-in-out infinite;
-  filter: drop-shadow(0 4px 12px rgba(1, 114, 221, 0.3));
-}
-
 .scanner-hero-title {
   background: linear-gradient(135deg, var(--theme-text-primary), var(--primary-dark));
   -webkit-background-clip: text;

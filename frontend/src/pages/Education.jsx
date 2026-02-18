@@ -94,7 +94,7 @@ function Education() {
 
       {/* Protection Steps */}
       <section className="edu-section">
-        <h2 className="edu-section-title">🛡️ The 4-Step Protection Rule</h2>
+        <h2 className="edu-section-title"><i className="fas fa-shield-alt" style={{ marginRight: '10px', color: 'var(--primary)' }}></i> The 4-Step Protection Rule</h2>
         <p className="edu-section-desc">Follow these 4 simple steps whenever you receive a suspicious message:</p>
         <div className="protection-grid">
           {protectionSteps.map((item) => (

@@ -103,9 +103,8 @@ function Scanner() {
   return (
     <div className="scanner-page">
       <div className="scanner-hero">
-        <div className="scanner-hero-icon">🛡️</div>
-        <h1 className="scanner-hero-title">Check if it&apos;s a Scam</h1>
-        <p className="scanner-hero-subtitle">Paste any suspicious email, text message, or website link below. Our AI will analyze it instantly and tell you if it&apos;s safe or dangerous.</p>
+        <h1 className="scanner-hero-title">Stop. Think. Verify.</h1>
+        <p className="scanner-hero-subtitle">Scammers use urgency to rush your decisions. Before you click a link, reply to a message, or authorize a payment—stop and verify here first. Our AI unmasks threats in emails, SMS, and URLs instantly.</p>
       </div>
 
       <section className="scanner-card">
@@ -305,7 +304,7 @@ function Scanner() {
             <div className="hiw-arrow">→</div>
             <div className="hiw-step"><div className="hiw-icon">🤖</div><h4>2. Analyze</h4><p>Our AI scans for 200+ phishing patterns and tactics</p></div>
             <div className="hiw-arrow">→</div>
-            <div className="hiw-step"><div className="hiw-icon">🛡️</div><h4>3. Know</h4><p>Get a clear verdict: Safe, Suspicious, or Phishing</p></div>
+            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-shield-check" style={{ color: 'var(--success)' }}></i> </div><h4>3. Know</h4><p>Get a clear verdict: Safe, Suspicious, or Phishing</p></div>
           </div>
         </section>
       )}

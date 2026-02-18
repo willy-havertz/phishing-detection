@@ -3,7 +3,7 @@ function Footer() {
     <footer className="footer">
       <div className="footer-content">
         <div className="footer-main">
-          <span className="footer-brand">🛡️ <strong>Phish Guard</strong></span>
+          <span className="footer-brand"><i className="fas fa-shield-alt" style={{ marginRight: '8px', color: 'var(--primary)' }}></i> <strong>Phish Guard</strong></span>
           <span className="footer-sep">—</span>
           <span>ML-Powered Phishing & Smishing Detection Platform</span>
         </div>
