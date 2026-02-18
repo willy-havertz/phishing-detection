@@ -5,7 +5,7 @@ import {
 } from "recharts";
 import { getStats, getDailyTrends, getTopPatterns, getRecentThreats } from "../utils/scanStorage";
 
-const COLORS = { phishing: "#EF4444", suspicious: "#F59E0B", safe: "#10B981", primary: "#ACC8A2", dark: "#1A2517" };
+const COLORS = { phishing: "#EF4444", suspicious: "#F59E0B", safe: "#22c55e", primary: "#0172DD", dark: "#022666" };
 
 function Dashboard() {
   const [overview, setOverview] = useState({ total_scans: 0, phishing_count: 0, suspicious_count: 0, safe_count: 0, email_count: 0, sms_count: 0, url_count: 0 });

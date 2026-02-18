@@ -1,36 +1,37 @@
 import { NavLink } from "react-router-dom";
+import ThemeToggle from "./ThemeToggle";
 
 function Header() {
   return (
     <header className="header">
       <NavLink to="/" className="logo">
-        <svg className="logo-icon" viewBox="0 0 24 24" fill="#ACC8A2">
-          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
-        </svg>
+        <img src="/logo.svg" alt="Phish Guard Logo" className="logo-img" style={{ width: '40px', height: '40px' }} />
         <div className="logo-text-wrap">
-          <span className="logo-text">Threat<span>Lens</span></span>
+          <span className="logo-text">Phish <span>Guard</span></span>
           <span className="logo-tagline">AI Phishing Detection</span>
         </div>
       </NavLink>
 
       <nav className="nav">
         <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-          <span className="nav-icon">🔍</span>
+          <i className="nav-icon fas fa-search"></i>
           <span className="nav-label">Scan</span>
         </NavLink>
         <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-          <span className="nav-icon">📊</span>
+          <i className="nav-icon fas fa-chart-pie"></i>
           <span className="nav-label">Dashboard</span>
         </NavLink>
         <NavLink to="/history" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-          <span className="nav-icon">📋</span>
+          <i className="nav-icon fas fa-history"></i>
           <span className="nav-label">History</span>
         </NavLink>
         <NavLink to="/education" className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-          <span className="nav-icon">📚</span>
+          <i className="nav-icon fas fa-graduation-cap"></i>
           <span className="nav-label">Learn</span>
         </NavLink>
       </nav>
+
+      <ThemeToggle />
     </header>
   );
 }

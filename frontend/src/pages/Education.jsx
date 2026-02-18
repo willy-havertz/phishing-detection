@@ -44,7 +44,7 @@ function Education() {
       title: "Red Flags to Watch",
       icon: "🚩",
       description: "Key warning signs that a message or website might be a phishing attempt.",
-      whatToDo: "If you spot any of these signs, don't interact with the message. Use ThreatLens to scan it instead!",
+      whatToDo: "If you spot any of these signs, don't interact with the message. Use Phish Guard to scan it instead!",
       examples: patterns?.red_flags || ["Misspelled domain names", "URL shorteners (bit.ly)", "IP addresses instead of domains", "Generic greetings (Dear Customer)", "Grammar errors", "Requests for sensitive info"],
     },
   };

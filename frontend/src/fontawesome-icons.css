@@ -1,0 +1,214 @@
+/* ==================== FONT AWESOME ICON ENHANCEMENTS ==================== */
+/* Styling adjustments for Font Awesome icons in navigation and theme toggle */
+
+/* Navigation Icon Styling */
+.nav-icon {
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2em;
+  transition: all var(--transition-base);
+}
+
+.nav-link:hover .nav-icon {
+  transform: scale(1.1);
+}
+
+.nav-link.active .nav-icon {
+  color: var(--primary);
+  text-shadow: 0 0 8px rgba(172, 200, 162, 0.4);
+}
+
+/* Icon-specific animations on hover */
+.nav-link:hover .fa-search {
+  animation: iconSearchPulse 0.6s ease;
+}
+
+.nav-link:hover .fa-chart-pie {
+  animation: iconRotate 0.6s ease;
+}
+
+.nav-link:hover .fa-history {
+  animation: iconRotate 0.6s ease;
+}
+
+.nav-link:hover .fa-graduation-cap {
+  animation: iconBounce 0.6s ease;
+}
+
+/* Theme Toggle Icon */
+.theme-toggle-icon {
+  font-size: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+}
+
+.theme-toggle:hover .theme-toggle-icon {
+  transform: rotate(15deg) scale(1.15);
+}
+
+.theme-toggle .fa-moon {
+  color: var(--primary);
+}
+
+.theme-toggle .fa-sun {
+  color: #fbbf24;
+}
+
+/* Icon Animations */
+@keyframes iconSearchPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+@keyframes iconRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-4px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Additional Page Icons Enhancement */
+.scanner-hero-icon,
+.empty-icon,
+.hiw-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Type Card Icons */
+.type-icon {
+  font-size: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  transition: all var(--transition-base);
+}
+
+.type-card:hover .type-icon {
+  transform: scale(1.15);
+}
+
+.type-card.active .type-icon {
+  transform: scale(1.2);
+}
+
+/* Result Icons */
+.verdict-emoji {
+  font-size: 4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Finding/Indicator Icons */
+.finding-item .finding-icon,
+.threat-item .threat-icon {
+  margin-right: 0.5rem;
+  opacity: 0.8;
+}
+
+/* Loading Icon Enhancement */
+.loading-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: spin 1s linear infinite;
+}
+
+/* Error/Warning Icons */
+.error-icon,
+.warning-icon {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+}
+
+/* Success Icons */
+.success-icon {
+  color: var(--success);
+  margin-right: 0.5rem;
+}
+
+/* Responsive Icon Sizing */
+@media (max-width: 768px) {
+  .nav-icon {
+    font-size: 1.3rem;
+  }
+  
+  .nav-label {
+    display: none;
+  }
+  
+  .nav-link {
+    padding: 0.5rem;
+    min-width: 44px;
+    justify-content: center;
+  }
+  
+  .theme-toggle-icon {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-icon {
+    font-size: 1.2rem;
+  }
+}
+
+/* Dark Theme Icon Adjustments */
+[data-theme="dark"] .nav-link.active .nav-icon {
+  text-shadow: 0 0 12px rgba(172, 200, 162, 0.6);
+}
+
+[data-theme="dark"] .theme-toggle .fa-sun {
+  color: #fbbf24;
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.5));
+}
+
+[data-theme="dark"] .theme-toggle .fa-moon {
+  color: var(--primary);
+  filter: drop-shadow(0 0 8px rgba(172, 200, 162, 0.4));
+}
+
+/* Icon Accessibility - Ensure proper contrast */
+.nav-icon,
+.theme-toggle-icon {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Print Styles */
+@media print {
+  .nav-icon,
+  .theme-toggle-icon {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
