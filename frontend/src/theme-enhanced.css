@@ -73,9 +73,9 @@
 /* ==================== DARK THEME ==================== */
 [data-theme="dark"] {
   --theme-bg-primary: #0a0d14;
-  --theme-bg-secondary: #111827;
-  --theme-bg-tertiary: #1f2937;
-  --theme-bg-elevated: #1f2937;
+  --theme-bg-secondary: #0f172a;
+  --theme-bg-tertiary: #1e293b;
+  --theme-bg-elevated: #1e293b;
   --theme-text-primary: #f8fafc;
   --theme-text-secondary: #94adca;
   --theme-text-tertiary: #64748b;
@@ -85,6 +85,12 @@
   --theme-shadow-md: 0 8px 20px rgba(0, 0, 0, 0.5);
   --theme-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
   --theme-shadow-xl: 0 24px 60px rgba(0, 0, 0, 0.75);
+  
+  /* Semantic Overrides for Dark Mode - Crucial for Contrast */
+  --success-light: rgba(16, 185, 129, 0.15);
+  --warning-light: rgba(245, 158, 11, 0.15);
+  --danger-light: rgba(239, 68, 68, 0.15);
+  --info-light: rgba(59, 130, 246, 0.15);
 }
 
 /* ==================== GLOBAL THEME APPLICATION ==================== */

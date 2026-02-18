@@ -75,10 +75,46 @@ function Scanner() {
 
   const getResultConfig = (classification) => {
     switch (classification) {
-      case "safe": return { icon: "fas fa-check-circle", title: "Looks Safe", color: "var(--success)", bg: "var(--success-light)", border: "var(--theme-border)", message: "No significant threats detected. This content appears legitimate.", action: "You can proceed with confidence, but always stay vigilant." };
-      case "suspicious": return { icon: "fas fa-exclamation-triangle", title: "Potentially Suspicious", color: "var(--warning)", bg: "var(--warning-light)", border: "var(--theme-border)", message: "Some warning signs were detected. This content may not be safe.", action: "Proceed with caution. Verify the sender before taking any action." };
-      case "phishing": return { icon: "fas fa-shield-virus", title: "Phishing Detected!", color: "var(--danger)", bg: "var(--danger-light)", border: "var(--theme-border)", message: "This content shows strong signs of being a phishing attempt!", action: "Do NOT click any links, share personal info, or respond to this message." };
-      default: return { icon: "fas fa-question-circle", title: "Unknown", color: "var(--theme-text-tertiary)", bg: "var(--theme-bg-tertiary)", border: "var(--theme-border)", message: "", action: "" };
+      case "safe": return { 
+        icon: "fas fa-check-circle", 
+        icon_action: "fas fa-info-circle",
+        title: "Looks Safe", 
+        color: "var(--success)", 
+        bg: "var(--success-light)", 
+        border: "var(--theme-border)", 
+        message: "No significant threats detected. This content appears legitimate.", 
+        action: "You can proceed with confidence, but always stay vigilant." 
+      };
+      case "suspicious": return { 
+        icon: "fas fa-exclamation-triangle", 
+        icon_action: "fas fa-exclamation-circle",
+        title: "Potentially Suspicious", 
+        color: "var(--warning)", 
+        bg: "var(--warning-light)", 
+        border: "var(--theme-border)", 
+        message: "Some warning signs were detected. This content may not be safe.", 
+        action: "Proceed with caution. Verify the sender before taking any action." 
+      };
+      case "phishing": return { 
+        icon: "fas fa-shield-virus", 
+        icon_action: "fas fa-exclamation-circle",
+        title: "Phishing Detected!", 
+        color: "var(--danger)", 
+        bg: "var(--danger-light)", 
+        border: "var(--theme-border)", 
+        message: "This content shows strong signs of being a phishing attempt!", 
+        action: "Do NOT click any links, share personal info, or respond to this message." 
+      };
+      default: return { 
+        icon: "fas fa-question-circle", 
+        icon_action: "fas fa-info-circle",
+        title: "Unknown", 
+        color: "var(--theme-text-tertiary)", 
+        bg: "var(--theme-bg-tertiary)", 
+        border: "var(--theme-border)", 
+        message: "", 
+        action: "" 
+      };
     }
   };
 
@@ -346,7 +382,7 @@ function Scanner() {
             <div className="hiw-arrow"><i className="fas fa-long-arrow-alt-right"></i></div>
             <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-robot"></i></div><h4>2. Analyze</h4><p>Our AI scans for 200+ phishing patterns and tactics</p></div>
             <div className="hiw-arrow"><i className="fas fa-long-arrow-alt-right"></i></div>
-            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-shield-alt" style={{ color: 'var(--success)' }}></i> </div><h4>3. Know</h4><p>Get a clear verdict: Safe, Suspicious, or Phishing</p></div>
+            <div className="hiw-step"><div className="hiw-icon"><i className="fas fa-clipboard-check" style={{ color: 'var(--success)' }}></i> </div><h4>3. Know</h4><p>Get a clear verdict: Safe, Suspicious, or Phishing</p></div>
           </div>
         </section>
       )}
