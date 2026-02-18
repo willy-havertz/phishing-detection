@@ -132,7 +132,7 @@ body {
   flex-direction: row !important;
   flex-wrap: nowrap !important;
   align-items: center !important;
-  justify-content: flex-end !important;
+  justify-content: space-between !important; /* Logo on left, rest on right */
   gap: 1.5rem !important;
   padding: 0.6rem 1.25rem !important;
   transition: all var(--transition-slow);
@@ -145,8 +145,7 @@ body {
   align-items: center !important;
   gap: 0.75rem !important;
   text-decoration: none !important;
-  order: 1;
-  margin-right: auto !important; /* Forces logo to far left on desktop */
+  flex-shrink: 0 !important;
 }
 
 .header-actions {
@@ -154,7 +153,6 @@ body {
   align-items: center !important;
   gap: 1rem !important;
   flex-shrink: 0 !important;
-  order: 2;
 }
 
 .menu-toggle {
@@ -187,39 +185,48 @@ body {
 
 @media (max-width: 991px) {
   .header {
-    padding: 0.5rem 0.75rem !important;
-    gap: 0.4rem !important;
-    justify-content: flex-end !important;
-    flex-wrap: nowrap !important; /* Force one row */
-    min-height: 54px !important;
+    padding: 0.5rem 1rem !important;
+    gap: 0.75rem !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    min-height: 56px !important;
   }
+  
   .menu-toggle {
     display: flex !important;
-    order: 3 !important; /* Last piece on the right */
+    order: 3 !important;
   }
+
   .desktop-nav {
     display: none !important;
   }
+
   .header-actions {
-    gap: 0.4rem !important;
-    order: 2 !important; /* Theme toggle stays in the middle */
+    gap: 0.6rem !important;
+    order: 2 !important;
   }
   
   .logo {
-    order: 1 !important; /* Logo/Name comes first on the right side */
-    margin-right: 0 !important;
-    gap: 0.4rem !important;
+    order: 1 !important;
+    margin-right: auto !important;
+    gap: 0.5rem !important;
   }
 
   .logo-img {
-    width: 26px !important; /* Smaller logo for single row */
-    height: 26px !important;
+    width: 28px !important;
+    height: 28px !important;
   }
   
   .logo-text {
-    font-size: 0.9rem !important;
-    white-space: nowrap; /* Prevent name wrapping */
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
   }
+
+  .logo-tagline {
+    display: none !important;
+  }
+}
   
   .logo-tagline {
     display: none !important;
