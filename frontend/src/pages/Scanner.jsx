@@ -193,15 +193,15 @@ function Scanner() {
           {(() => {
             const config = getResultConfig(result.classification);
             return (<>
-              <section className="result-verdict" style={{ background: config.bg, borderColor: config.border }}>
+              <section className={`result-verdict ${result.classification}-result`} style={{ background: result.classification !== 'phishing' ? config.bg : undefined, borderColor: result.classification !== 'phishing' ? config.border : undefined }}>
                 <div className="verdict-main">
-                  <i className={`verdict-icon ${config.icon}`} style={{ color: config.color }}></i>
+                  <i className={`verdict-icon ${config.icon}`} style={{ color: result.classification !== 'phishing' ? config.color : undefined }}></i>
                   <div className="verdict-text">
-                    <h2 className="verdict-title" style={{ color: config.color }}>{config.title}</h2>
+                    <h2 className="verdict-title" style={{ color: result.classification !== 'phishing' ? config.color : undefined }}>{config.title}</h2>
                     <p className="verdict-message">{config.message}</p>
                   </div>
                 </div>
-                <div className="verdict-action" style={{ borderColor: config.border }}>
+                <div className="verdict-action" style={{ borderColor: result.classification !== 'phishing' ? config.border : 'rgba(255,255,255,0.2)' }}>
                   <strong>What should you do?</strong> {config.action}
                 </div>
                 <div className="threat-gauge-wrapper">
